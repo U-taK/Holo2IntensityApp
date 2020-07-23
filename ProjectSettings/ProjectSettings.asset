@@ -573,11 +573,11 @@ PlayerSettings:
   m_MobileRenderingPath: 1
   metroPackageName: Holo2IntensityApp
   metroPackageVersion: 1.0.0.0
-  metroCertificatePath: 
+  metroCertificatePath: Assets\WSATestCertificate.pfx
   metroCertificatePassword: 
-  metroCertificateSubject: 
-  metroCertificateIssuer: 
-  metroCertificateNotAfter: 0000000000000000
+  metroCertificateSubject: Oiken
+  metroCertificateIssuer: Oiken
+  metroCertificateNotAfter: 00b6912acb7fd701
   metroApplicationDescription: Template_3D
   wsaImages: {}
   metroTileShortName: Holo2IntensityApp
@@ -631,7 +631,7 @@ PlayerSettings:
       UserNotificationListener: False
       VideosLibrary: False
       VoipCall: False
-      WebCam: False
+      WebCam: True
   metroTargetDeviceFamilies:
     Desktop: False
     Holographic: True
