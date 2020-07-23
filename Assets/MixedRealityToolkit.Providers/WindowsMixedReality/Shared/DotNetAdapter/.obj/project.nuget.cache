@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "yUo7545w0XvKrOlzUPL+kx7TDbg8b0MJ0ioTD8LgBCzA7l0Pe3I4AAqDQ1QlukruvMQ7g54bXf+yc/Ojvm45yA==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\katao\\Documents\\labUnity\\Holo2IntensityApp\\Assets\\MixedRealityToolkit.Providers\\WindowsMixedReality\\Shared\\DotNetAdapter\\DotNetAdapter.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\katao\\.nuget\\packages\\microsoft.windows.mixedreality.dotnetwinrt\\0.5.1045\\microsoft.windows.mixedreality.dotnetwinrt.0.5.1045.nupkg.sha512",
+    "C:\\Users\\katao\\.nuget\\packages\\system.drawing.primitives\\4.3.0\\system.drawing.primitives.4.3.0.nupkg.sha512"
+  ],
+  "logs": []
+}
