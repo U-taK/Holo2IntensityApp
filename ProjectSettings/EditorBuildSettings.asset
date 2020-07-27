@@ -5,10 +5,16 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/Scenes/VuforiaTest.unity
-    guid: 3531dd87348d5624d99164aa113a144f
   - enabled: 1
-    path: Assets/Scenes/OSCTest.unity
-    guid: 3e1557837cedc554186e9a1b77b0452e
+    path: Assets/MixedRealityToolkit.SDK/StandardAssets/Scenes/DefaultManagerScene.unity
+    guid: ae7bb08d297fb69408695d8de0962524
+  - enabled: 1
+    path: Assets/MixedRealityToolkit.SDK/StandardAssets/Scenes/DefaultLightingScene.unity
+    guid: 7e54e36c44f826c438c95da79f8de638
+  - enabled: 1
+    path: Assets/MixedRealityToolkit.SDK/StandardAssets/Scenes/DefaultLightingScene.unity
+    guid: 7e54e36c44f826c438c95da79f8de638
+  - enabled: 1
+    path: Assets/MixedRealityToolkit.SDK/StandardAssets/Scenes/DefaultLightingScene.unity
+    guid: 7e54e36c44f826c438c95da79f8de638
   m_configObjects: {}
