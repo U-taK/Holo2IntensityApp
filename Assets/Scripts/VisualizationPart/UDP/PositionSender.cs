@@ -21,6 +21,7 @@ namespace uOSC
         public void SendStart(string ip)
         {
             client = GetComponent<uOscClient>();
+            client.OnClientStart(ip);
             StartCoroutine("SendData");
         }
 

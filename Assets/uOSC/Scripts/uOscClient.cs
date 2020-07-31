@@ -2,34 +2,54 @@
 using System.IO;
 using System.Collections.Generic;
 
+
 namespace uOSC
 {
 
-public class uOscClient : MonoBehaviour
-{
-    private const int BufferSize = 8192;
-    private const int MaxQueueSize = 100;
+    public class uOscClient : MonoBehaviour
+    {
 
-    [SerializeField]
-    string address = "127.0.0.1";
+        private const int BufferSize = 8192;
+        private const int MaxQueueSize = 100;
+        [SerializeField]
+        //string address = "224.0.0.1"; // for multicast
+        string address = "192.168.1.21"; // for unicast
 
-    [SerializeField]
-    int port = 3333;
+        bool startOK = false;
+        [SerializeField]
+        int port = 3333;
 
 #if NETFX_CORE
     Udp udp_ = new Uwp.Udp();
     Thread thread_ = new Uwp.Thread();
 #else
+
+     
+    // for Multicast
+    //Udp udp_ = new DotNetMulti.Udp();
+    //Thread thread_ = new DotNetMulti.Thread();
+
+    // for Unicast
     Udp udp_ = new DotNet.Udp();
     Thread thread_ = new DotNet.Thread();
+   
+
 #endif
-    Queue<object> messages_ = new Queue<object>();
+Queue<object> messages_ = new Queue<object>();
     object lockObject_ = new object();
 
-    void OnEnable()
+
+        //クライアントを起動(手動)
+    public void OnClientStart(string ip)
     {
-        udp_.StartClient(address, port);
-        thread_.Start(UpdateSend);
+            if (!startOK)
+            {
+                startOK = true;
+                udp_.StartClient(ip, port);
+                thread_.Start(UpdateSend);
+                Debug.Log("thread start to" + ip);
+                address = ip;
+            }
     }
 
     void OnDisable()

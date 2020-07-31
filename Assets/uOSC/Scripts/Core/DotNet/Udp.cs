@@ -8,48 +8,52 @@ using System.Net.Sockets;
 namespace uOSC.DotNet
 {
 
-public class Udp : uOSC.Udp
-{
-    enum State
+    public class Udp : uOSC.Udp
     {
-        Stop,
-        Server,
-        Client,
-    }
-    State state_ = State.Stop;
-
-    Queue<byte[]> messageQueue_ = new Queue<byte[]>();
-    object lockObject_ = new object();
-
-    UdpClient udpClient_;
-    IPEndPoint endPoint_;
-    Thread thread_ = new Thread();
-
-    public override int messageCount
-    {
-        get { return messageQueue_.Count; }
-    }
-
-    public override void StartServer(int port)
-    {
-        Stop();
-        state_ = State.Server;
-
-        endPoint_ = new IPEndPoint(IPAddress.Any, port);
-        udpClient_ = new UdpClient(endPoint_);
-        thread_.Start(() => 
+        enum State
         {
-            while (udpClient_.Available > 0) 
-            {
-                var buffer = udpClient_.Receive(ref endPoint_);
-                lock (lockObject_)
-                {
-                    messageQueue_.Enqueue(buffer);
-                }
-            }
-        });
-    }
+            Stop,
+            Server,
+            Client,
+        }
+        State state_ = State.Stop;
 
+        Queue<byte[]> messageQueue_ = new Queue<byte[]>();
+        object lockObject_ = new object();
+
+        UdpClient udpClient_;
+        IPEndPoint endPoint_;
+        Thread thread_ = new Thread();
+
+        public override int messageCount
+        {
+            get { return messageQueue_.Count; }
+        }
+
+        public override void StartServer(int port)
+        {
+            Stop();
+            state_ = State.Server;
+
+            endPoint_ = new IPEndPoint(IPAddress.Any, port);
+            udpClient_ = new UdpClient(endPoint_);
+            thread_.Start(() =>
+            {
+                while (udpClient_.Available > 0)
+                {
+                    var buffer = udpClient_.Receive(ref endPoint_);
+                    lock (lockObject_)
+                    {
+                        messageQueue_.Enqueue(buffer);
+                    }
+                }
+            });
+        }
+
+    //Dummy
+    public override void StartServer(string address, int port) { 
+            
+    }
     public override void StartClient(string address, int port)
     {
         Stop();

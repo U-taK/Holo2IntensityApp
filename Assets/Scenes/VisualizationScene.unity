@@ -6939,9 +6939,7 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 473759287}
-  m_Text: '1
-
-'
+  m_Text: 0
   m_OffsetZ: 0
   m_CharacterSize: 1
   m_LineSpacing: 1
@@ -23029,7 +23027,7 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1679563673}
-  m_Text: 22
+  m_Text: 46
   m_OffsetZ: 0
   m_CharacterSize: 1
   m_LineSpacing: 1

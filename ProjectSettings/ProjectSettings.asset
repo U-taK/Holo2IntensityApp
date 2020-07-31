@@ -578,7 +578,7 @@ PlayerSettings:
   metroCertificateSubject: Oiken
   metroCertificateIssuer: Oiken
   metroCertificateNotAfter: 00b6912acb7fd701
-  metroApplicationDescription: Template_3D
+  metroApplicationDescription: Holo2IntensityApp
   wsaImages: {}
   metroTileShortName: Holo2IntensityApp
   metroTileShowName: 0
