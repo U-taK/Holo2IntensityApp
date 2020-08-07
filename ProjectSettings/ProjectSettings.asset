@@ -557,7 +557,7 @@ PlayerSettings:
   scriptingDefineSymbols:
     4: 
     7: 
-    14: DOTNETWINRT_PRESENT
+    14: 
   platformArchitecture: {}
   scriptingBackend: {}
   il2cppCompilerConfiguration: {}
@@ -577,7 +577,7 @@ PlayerSettings:
   metroCertificatePassword: 
   metroCertificateSubject: Oiken
   metroCertificateIssuer: Oiken
-  metroCertificateNotAfter: 00b6912acb7fd701
+  metroCertificateNotAfter: 806811ca0f8ad701
   metroApplicationDescription: Holo2IntensityApp
   wsaImages: {}
   metroTileShortName: Holo2IntensityApp
