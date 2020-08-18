@@ -18,11 +18,14 @@ public class TCPClientExample : MonoBehaviour
     [SerializeField] MeshRenderer box;
     [SerializeField] TextMesh number;
     [SerializeField] TextMesh message;
-
+    //データの保持
+    Color color;
+    String num_string,mes_string;
     //Note:オリジナルクラスはTCPClient、System.Net.SocketsはTcpClient
     TCPClient tClient = new TCPClient();
     StateObject clientState = StateObject.stateObject;
     TransferData transferData = TransferData.transferData;
+    bool gotData = false;
 
     // Start is called before the first frame update
     void Start()
@@ -38,7 +41,13 @@ public class TCPClientExample : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (gotData)
+        {
+            box.material.color = color;
+            number.text = num_string;
+            message.text = mes_string;
+            gotData = false;
+        }
     }
 
     /**tcp始めるボタンに紐付け**/
@@ -103,7 +112,7 @@ public class TCPClientExample : MonoBehaviour
     //送信パターン2(ボタンに貼り付け)
     public void SendPattern2()
     {
-        //送信データの1パターン目
+        //送信データの2パターン目
         TransferParent sendData2 = new TransferParent("Test2", "Test2 sender", 5);
         string json = transferData.SerializeJson<TransferParent>(sendData2);
         //送信
@@ -138,31 +147,25 @@ public class TCPClientExample : MonoBehaviour
 	/// </summary>
     void tClient_OnReceiveData(object sender, string e)
     {
-        //受信データに"startMeasure"が含まれてたら設定情報に変換
-        //TODO:受信データに数字と記号だけだったら表示データに変換
-        //とかの方が賢いかも、正規表現めんどいけど
-        //受信データ->設定情報変換
-        //if (e.Contains("startMeasure"))
+        
         TransferParent data = new TransferParent();
         if (transferData.CanDesirializeJson<TransferParent>(e, out data))
         {
+            gotData = true;
             //表示データを更新
             if (data.keyword == "Test3") 
             {
-                box.material.color = Color.green;
-                number.text = data.testNum.ToString();
-                message.text = data.Comment;
+                color = Color.green;
+                num_string = data.testNum.ToString();
+                mes_string = data.Comment;
             }
             else if (data.keyword == "Test4")
             {
-                box.material.color = Color.red;
-                number.text = data.testNum.ToString();
-                message.text = data.Comment;
+                color = Color.red;
+                num_string = data.testNum.ToString();
+                mes_string = data.Comment;
             }
-        }
-        //受信データ->表示データ変換
-        //       else
-        //           clientState.ReceivedJson2ReceivedObj(e, ref cd);
+        }        
     }
 
     private void OnApplicationQuit()

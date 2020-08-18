@@ -85,7 +85,7 @@ public class TCPServerExample : MonoBehaviour
         }
     }
 
-    //送信パターン3(ボタンに張り付け)
+    //送信パターン3(ボタンに貼り付け)
     public void SendPattern3()
     {
         //送信データの3パターン目
@@ -102,10 +102,10 @@ public class TCPServerExample : MonoBehaviour
             Debug.Log(e);
         }
     }
-    //送信パターン4(ボタンに張り付け)
+    //送信パターン4(ボタンに貼り付け)
     public void SendPattern4()
     {
-        //送信データの3パターン目
+        //送信データの4パターン目
         TransferParent sendData4 = new TransferParent("Test4", "Test4", 4);
         string json = transferData.SerializeJson<TransferParent>(sendData4);
 
