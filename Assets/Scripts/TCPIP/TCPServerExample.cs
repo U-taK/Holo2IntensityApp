@@ -15,6 +15,8 @@ public class TCPServerExample : MonoBehaviour
     StateObject serverState = StateObject.stateObject;
     TransferData transferData = TransferData.transferData;
 
+    Color color;
+    bool GotData = false;
     // Start is called before the first frame update
     void Start()
     {
@@ -37,6 +39,11 @@ public class TCPServerExample : MonoBehaviour
             SendPattern3();
         if (Input.GetKeyDown(KeyCode.Alpha4))
             SendPattern4();
+        if (GotData)
+        {
+            box.material.color = color;
+            GotData = false;
+        }
     }
 
     /**tcp始めるボタンに紐付け**/
@@ -138,16 +145,17 @@ public class TCPServerExample : MonoBehaviour
         TransferParent data = new TransferParent();
         if (transferData.CanDesirializeJson<TransferParent>(e, out data))
         {
+            GotData = true;
             //表示データを更新
             if (data.keyword == "Test1")
             {
-                box.material.color = Color.black;
+                color = Color.black;
                 Debug.Log(data.keyword + "番号"+data.testNum.ToString()
                 + "コメント:" +  data.Comment);
             }
             else if (data.keyword == "Test2")
             {
-                box.material.color = Color.red;
+               color = Color.red;
                 Debug.Log(data.keyword + "番号" + data.testNum.ToString()
                 + "コメント:" + data.Comment);
             }
