@@ -21,7 +21,7 @@ public class StateObject
     public Socket workSocket { get; set; } = null;
     //受信素データバッファサイズ
     //多めに16384ぐらい取ってみる
-    public const int BufferSize = 16384;
+    public const int BufferSize = 1024;
     //受信素データ
     public byte[] buffer { get; set; } = new byte[BufferSize];
 

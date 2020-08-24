@@ -2,16 +2,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using HoloLensModule.Network;
 
 public class TCPServerExample : MonoBehaviour
 {
     //HoloLens2のIP,ポート
-    [SerializeField] string Ip;
+    //[SerializeField] string Ip;
     //ポート
-    [SerializeField] string Port;
+    [SerializeField] int Port;
 
     [SerializeField] MeshRenderer box;
-    TCPServer tServer = new TCPServer();
+    TCPServerManager tServer;
     StateObject serverState = StateObject.stateObject;
     TransferData transferData = TransferData.transferData;
 
@@ -20,12 +21,7 @@ public class TCPServerExample : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //接続OKイベント
-        tServer.OnConnected += new TCPServer.ConnectedEventHandler(tServer_OnConnected);
-        //接続断イベント
-        tServer.OnDisconnected += new TCPServer.DisconnectedEventHandler(tServer_OnDisconnected);
-        //データ受信イベント
-        tServer.OnReceiveData += new TCPServer.ReceiveEventHandler(tServer_OnReceiveData);
+
     }
 
     // Update is called once per frame
@@ -52,20 +48,8 @@ public class TCPServerExample : MonoBehaviour
     /// </summary>
     public void StartTCPServer()
     {
-        string host = Ip;
-        int port;
-        if (int.TryParse(Port, out int result))
-            port = result;
-        else port = 3333;
-
-        try
-        {
-            tServer.StartListening(host, port);
-        }
-        catch (Exception e)
-        {
-            Debug.Log(e);
-        }
+        tServer = new TCPServerManager(Port);
+        Debug.Log("Server OK");
     }
 
     /**tcp止めるボタンに紐付け**/
@@ -77,7 +61,7 @@ public class TCPServerExample : MonoBehaviour
         try
         {
             //closeしてるけど送受信がどうなってるかは謎
-            tServer.Close();
+            tServer.DisConnectClient();
         }
         catch (Exception e)
         {
@@ -95,7 +79,7 @@ public class TCPServerExample : MonoBehaviour
         //送信
         try
         {
-            tServer.Send(json);
+           // tServer.Send(json);
         }
         catch (Exception e)
         {
@@ -112,7 +96,7 @@ public class TCPServerExample : MonoBehaviour
         //送信
         try
         {
-            tServer.Send(json);
+          //  tServer.Send(json);
         }
         catch (Exception e)
         {

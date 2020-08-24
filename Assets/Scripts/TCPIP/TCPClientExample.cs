@@ -8,6 +8,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using HoloLensModule.Network;
 
 public class TCPClientExample : MonoBehaviour
 {
@@ -22,20 +23,16 @@ public class TCPClientExample : MonoBehaviour
     Color color;
     String num_string,mes_string;
     //Note:オリジナルクラスはTCPClient、System.Net.SocketsはTcpClient
-    TCPClient tClient = new TCPClient();
-    StateObject clientState = StateObject.stateObject;
+    //TCPClient tClient = new TCPClient();
+    //StateObject clientState = StateObject.stateObject;
+    TCPClientManager tClient;
     TransferData transferData = TransferData.transferData;
     bool gotData = false;
 
     // Start is called before the first frame update
     void Start()
     {
-        //接続OKイベント
-        tClient.OnConnected += new TCPClient.ConnectedEventHandler(tClient_OnConnected);
-        //接続断イベント
-        tClient.OnDisconnected += new TCPClient.DisconnectedEventHandler(tClient_OnDisconnected);
-        //データ受信イベント
-        tClient.OnReceiveData += new TCPClient.ReceiveEventHandler(tClient_OnReceiveData);
+        
     }
 
     // Update is called once per frame
@@ -64,10 +61,10 @@ public class TCPClientExample : MonoBehaviour
 
         try
         {
-            tClient.Connect(host, port);
-            //受信開始
-            tClient.StartReceive();
-            Debug.Log("準備完了");
+            tClient = new TCPClientManager(Ip, int.Parse(Port));
+            //データ受信イベント
+            tClient.ListenerMessageEvent += tClient_OnReceiveData;
+            Debug.Log("Client OK");
         }
         catch (Exception ex)
         {
@@ -84,7 +81,7 @@ public class TCPClientExample : MonoBehaviour
         try
         {
             //closeしてるけど送受信がどうなってるかは謎
-            tClient.Close();
+            tClient.DisConnectClient();
         }
         catch (Exception e)
         {
@@ -101,7 +98,7 @@ public class TCPClientExample : MonoBehaviour
         //送信
         try
         {
-            tClient.StartSend(json);
+            tClient.SendMessage(json);
         }
         catch (Exception ex)
         {
@@ -118,7 +115,7 @@ public class TCPClientExample : MonoBehaviour
         //送信
         try
         {
-            tClient.StartSend(json);
+            tClient.SendMessage(json);
         }
         catch (Exception ex)
         {
@@ -127,30 +124,15 @@ public class TCPClientExample : MonoBehaviour
     }
 
     /// <summary>
-    /// 接続断イベント
-    /// </summary>
-    void tClient_OnDisconnected(object sender, EventArgs e)
-    {
-        Debug.Log("Client接続解除");
-    }
-
-    /// <summary>
-	/// 接続OKイベント
-	/// </summary>
-    void tClient_OnConnected(EventArgs e)
-    {
-        Debug.Log("Client接続完了");
-    }
-
-    /// <summary>
 	/// データ受信イベント
 	/// </summary>
-    void tClient_OnReceiveData(object sender, string e)
+    void tClient_OnReceiveData(string ms)
     {
         
         TransferParent data = new TransferParent();
-        if (transferData.CanDesirializeJson<TransferParent>(e, out data))
+        if (transferData.CanDesirializeJson<TransferParent>(ms, out data))
         {
+            Debug.Log(data.keyword);
             gotData = true;
             //表示データを更新
             if (data.keyword == "Test3") 
@@ -164,6 +146,22 @@ public class TCPClientExample : MonoBehaviour
                 color = Color.red;
                 num_string = data.testNum.ToString();
                 mes_string = data.Comment;
+            }
+            else if (data.keyword == "Test1")
+            {
+                color = Color.black;
+                num_string = data.testNum.ToString();
+                mes_string = data.Comment;
+                Debug.Log(data.keyword + "番号" + data.testNum.ToString()
+                + "コメント:" + data.Comment);
+            }
+            else if (data.keyword == "Test2")
+            {
+                color = Color.red;
+                num_string = data.testNum.ToString();
+                mes_string = data.Comment;
+                Debug.Log(data.keyword + "番号" + data.testNum.ToString()
+                + "コメント:" + data.Comment);
             }
         }        
     }
