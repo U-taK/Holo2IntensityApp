@@ -22,9 +22,7 @@ public class TCPClientExample : MonoBehaviour
     //データの保持
     Color color;
     String num_string,mes_string;
-    //Note:オリジナルクラスはTCPClient、System.Net.SocketsはTcpClient
-    //TCPClient tClient = new TCPClient();
-    //StateObject clientState = StateObject.stateObject;
+    
     TCPClientManager tClient;
     TransferData transferData = TransferData.transferData;
     bool gotData = false;
@@ -64,6 +62,8 @@ public class TCPClientExample : MonoBehaviour
             tClient = new TCPClientManager(Ip, int.Parse(Port));
             //データ受信イベント
             tClient.ListenerMessageEvent += tClient_OnReceiveData;
+            tClient.OnConnected += tClient_OnConnected;
+            tClient.OnDisconnected += tClient_OnDisconnected;
             Debug.Log("Client OK");
         }
         catch (Exception ex)
@@ -166,9 +166,26 @@ public class TCPClientExample : MonoBehaviour
         }        
     }
 
+    /// <summary>
+	/// 接続断イベント
+	/// </summary>
+    void tClient_OnDisconnected(object sender, EventArgs e)
+    {
+        Debug.Log("Client接続解除");
+    }
+
+    /// <summary>
+	/// 接続OKイベント
+	/// </summary>
+    void tClient_OnConnected(EventArgs e)
+    {
+        Debug.Log("Serverと接続完了");
+    }
+
     private void OnApplicationQuit()
     {
-        StopTCPClient();
+        if(tClient != null)
+            StopTCPClient();
     }
 
 }

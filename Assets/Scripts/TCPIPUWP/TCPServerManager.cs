@@ -1,92 +1,118 @@
-﻿using System;
+﻿//////////////////////////////
+///HoloLens2-PC間のサーバー
+///PC側でサーバーを置くことのみを想定しているため,UDP実装はなし
+//////////////////////////////
+
+using System;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
+
 using System.Net;
-#if WINDOWS_UWP
-using System.Threading.Tasks;
-using Windows.Networking.Sockets;
-using System.IO;
-using System.Diagnostics;
-#else
 using System.Net.Sockets;
-#endif
+using System.Threading;
 
 namespace HoloLensModule.Network
 {
     public class TCPServerManager
     {
-#if WINDOWS_UWP
-        private StreamSocketListener socketlistener = null;
-        private List<StreamWriter> streamList = new List<StreamWriter>();
-#else
+        //データ受信イベント(json)
+        public delegate void ListenerMessageEventHandler(string ms);
+        public event ListenerMessageEventHandler ListenerMessageEvent;
+        //データ受信イベント(バイナリ)
+        public delegate void ListenerByteEventHandler(byte[] data);
+        public event ListenerByteEventHandler ListenerByteEvent;
+
+        //接続断イベント
+        public delegate void DisconnectedEventHandler(object sender, EventArgs e);
+        public event DisconnectedEventHandler OnDisconnected;
+
+        //接続OKイベント
+        public delegate void ConnectedEventHandler(EventArgs e);
+        public event ConnectedEventHandler OnConnected;
+
         private TcpListener tcpListener = null;
         private List<NetworkStream> streamList = new List<NetworkStream>();
-#endif
+        private Thread sendthread = null;
+        private NetworkStream stream = null;
+
         private bool isActiveThread = true;
+
 
         public TCPServerManager() { }
 
+        //コンストラクタで接続開始
         public TCPServerManager(int port)
         {
             ConnectServer(port);
         }
 
+        /// <summary>
+        /// ポート番号のみを指定、サーバー側なのでIPは指定する必要なし
+        /// </summary>
+        /// <param name="port"></param>
         public void ConnectServer(int port)
         {
-#if WINDOWS_UWP
-            Task.Run(async () =>
-            {
-                socketlistener = new StreamSocketListener();
-                socketlistener.ConnectionReceived += ConnectionReceived;
-                await socketlistener.BindServiceNameAsync(port.ToString());
-            });
-#else
             tcpListener = new TcpListener(IPAddress.Any, port);
             tcpListener.Start();
             tcpListener.BeginAcceptTcpClient(AcceptTcpClient, tcpListener);
-#endif
         }
 
-        public void DisConnectClient()
+        /// <summary>
+        /// jsonファイルを送信(バイナリに変換してから)
+        /// </summary>
+        /// <param name="ms">jsonファイル</param>
+        public bool SendMessage(string ms)
         {
-#if WINDOWS_UWP
-            socketlistener.Dispose();
-#else
-            tcpListener.Stop();
-#endif
-            isActiveThread = false;
+            return SendMessage(Encoding.UTF8.GetBytes(ms));
         }
 
-#if WINDOWS_UWP
-        private async void ConnectionReceived(StreamSocketListener sender, StreamSocketListenerConnectionReceivedEventArgs args)
+        /// <summary>
+        /// バイナリファイルを送信
+        /// </summary>
+        /// <param name="data">送信データ</param>
+        public bool SendMessage(byte[] data)
         {
-            var reader = new StreamReader(args.Socket.InputStream.AsStreamForRead());
-            var writer = new StreamWriter(args.Socket.OutputStream.AsStreamForWrite());
-            streamList.Add(writer);
-            var bytes = new byte[65536];
-            while (isActiveThread)
+            if (sendthread == null || sendthread.ThreadState != ThreadState.Running)
             {
-                try
+                if (stream != null)
                 {
-                    var num = await reader.BaseStream.ReadAsync(bytes, 0, bytes.Length);
-                    if (num > 0)
-                    {
-                        var data = new byte[num];
-                        Array.Copy(bytes, 0, data, 0, num);
-                        for (int i = 0; i < streamList.Count; i++)
-                        {
-                            await streamList[i].BaseStream.WriteAsync(data, 0, data.Length);
-                            await streamList[i].FlushAsync();
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.Write(e);
+                    sendthread = new Thread(() => { stream.Write(data, 0, data.Length); });
+                    sendthread.Start();
+                    return true;
                 }
             }
+            return false;
         }
-#else
+
+        /// <summary>
+        /// ボタンに紐づけ
+        /// 終了処理
+        /// </summary>
+        public void DisConnectClient()
+        {
+            if (isActiveThread)
+            {
+                tcpListener.Stop();
+                if (sendthread != null)
+                {
+                    sendthread.Abort();
+                    sendthread = null;
+                }
+                stream = null;
+                isActiveThread = false;
+                UnityEngine.Debug.Log("サーバ閉じるよ");
+                //接続断イベント発生
+                OnDisconnected(this, new EventArgs());
+            }
+            else
+                UnityEngine.Debug.Log("サーバ閉じてたよ");
+        }
+
+        /// <summary>
+        /// クライアントとの接続に成功すると実行
+        /// </summary>
+        /// <param name="ar"></param>
         private void AcceptTcpClient(IAsyncResult ar)
         {
             var listener = (TcpListener)ar.AsyncState;
@@ -94,32 +120,39 @@ namespace HoloLensModule.Network
             var tcpClient = listener.EndAcceptTcpClient(ar);
             listener.BeginAcceptTcpClient(AcceptTcpClient, listener);
             tcpClient.ReceiveTimeout = 100;
-            var stream = tcpClient.GetStream();
+            stream = tcpClient.GetStream();
             streamList.Add(stream);
             var bytes = new byte[tcpClient.ReceiveBufferSize];
-
+            if (OnConnected != null)
+                OnConnected(new EventArgs());
+            //受信待ち
             while (isActiveThread)
             {
                 try
                 {
+                    //streamにデータがあれば読み込み
                     var num = stream.Read(bytes, 0, bytes.Length);
                     if (num > 0)
                     {
-                        for (int i = 0; i < streamList.Count; i++)
-                        {
-                            if (streamList[i].CanWrite == true) streamList[i].Write(bytes, 0, num);
-                        }
+                        var data = new byte[num];
+                        Array.Copy(bytes, 0, data, 0, num);
+                        //イベントで取得データを処理
+                        if (ListenerMessageEvent != null)
+                            ListenerMessageEvent(Encoding.UTF8.GetString(data));
+                        if (ListenerByteEvent != null)
+                            ListenerByteEvent(data);
                     }
                 }
                 catch (Exception e)
                 {
                     Console.Write(e);
                 }
+                //ここの処理が不明
                 if (tcpClient.Client.Poll(1000, SelectMode.SelectRead) && tcpClient.Client.Available == 0) break;
             }
             stream.Close();
+            stream = null;
             tcpClient.Close();
         }
-#endif
     }
 }

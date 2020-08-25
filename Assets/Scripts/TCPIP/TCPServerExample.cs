@@ -6,8 +6,6 @@ using HoloLensModule.Network;
 
 public class TCPServerExample : MonoBehaviour
 {
-    //HoloLens2のIP,ポート
-    //[SerializeField] string Ip;
     //ポート
     [SerializeField] int Port;
 
@@ -49,6 +47,10 @@ public class TCPServerExample : MonoBehaviour
     public void StartTCPServer()
     {
         tServer = new TCPServerManager(Port);
+        //データ受信イベント
+        tServer.ListenerMessageEvent += tServer_OnReceiveData;
+        tServer.OnDisconnected += tServer_OnDisconnected;
+        tServer.OnConnected += tServer_OnConnected;
         Debug.Log("Server OK");
     }
 
@@ -79,7 +81,7 @@ public class TCPServerExample : MonoBehaviour
         //送信
         try
         {
-           // tServer.Send(json);
+           tServer.SendMessage(json);
         }
         catch (Exception e)
         {
@@ -96,7 +98,7 @@ public class TCPServerExample : MonoBehaviour
         //送信
         try
         {
-          //  tServer.Send(json);
+          tServer.SendMessage(json);
         }
         catch (Exception e)
         {
@@ -117,17 +119,17 @@ public class TCPServerExample : MonoBehaviour
 	/// </summary>
     void tServer_OnConnected(EventArgs e)
     {
-        Debug.Log("Client接続完了");
+        Debug.Log("Clientと接続完了");
     }
 
     /// <summary>
 	/// データ受信イベント
 	/// </summary>
-    void tServer_OnReceiveData(object sender, string e)
+    void tServer_OnReceiveData(string ms)
     {
         //受信データから設定オブジェクト設定
         TransferParent data = new TransferParent();
-        if (transferData.CanDesirializeJson<TransferParent>(e, out data))
+        if (transferData.CanDesirializeJson<TransferParent>(ms, out data))
         {
             GotData = true;
             //表示データを更新
@@ -148,7 +150,8 @@ public class TCPServerExample : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-        StopTCPServer();
+        if(tServer != null)
+            StopTCPServer();
     }
 
 }

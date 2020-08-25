@@ -1,4 +1,9 @@
-﻿using System;
+﻿//////////////////////////////
+///HoloLens2-PC間のクライアント
+///PC,Holoどちらでも動作確認済み
+//////////////////////////////
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -17,11 +22,19 @@ namespace HoloLensModule.Network
 {
     public class TCPClientManager
     {
+        //データ受信イベント
         public delegate void ListenerMessageEventHandler(string ms);
         public event ListenerMessageEventHandler ListenerMessageEvent;
 
         public delegate void ListenerByteEventHandler(byte[] data);
         public event ListenerByteEventHandler ListenerByteEvent;
+
+        //接続断イベント
+        public delegate void DisconnectedEventHandler(object sender, EventArgs e);
+        public event DisconnectedEventHandler OnDisconnected;
+        //接続OKイベント
+        public delegate void ConnectedEventHandler(EventArgs e);
+        public event ConnectedEventHandler OnConnected;
 
 #if WINDOWS_UWP
         private StreamWriter writer = null;
@@ -34,6 +47,11 @@ namespace HoloLensModule.Network
 
         public TCPClientManager() { }
 
+        /// <summary>
+        ///サーバーとの接続を図る 
+        /// </summary>
+        /// <param name="ipaddress">サーバーアドレス</param>
+        /// <param name="port"></param>
         public TCPClientManager(string ipaddress, int port)
         {
             ConnectClient(ipaddress, port);
@@ -49,6 +67,8 @@ namespace HoloLensModule.Network
                 writer = new StreamWriter(socket.OutputStream.AsStreamForWrite());
                 StreamReader reader = new StreamReader(socket.InputStream.AsStreamForRead());
                 byte[] bytes = new byte[65536];
+                //接続OKイベント発生
+                OnConnected(new EventArgs());
                 while (isActiveThread)
                 {
                     try
@@ -114,6 +134,10 @@ namespace HoloLensModule.Network
         }
 
 
+        /// <summary>
+        /// 終了処理
+        /// ボタンに紐づけ
+        /// </summary>
         public void DisConnectClient()
         {
 #if WINDOWS_UWP
@@ -131,9 +155,16 @@ namespace HoloLensModule.Network
             }
             stream = null;
 #endif
+            //接続断イベント発生
+            OnDisconnected(this, new EventArgs());
         }
 #if WINDOWS_UWP
 #else
+        /// <summary>
+        /// 接続確認後動作
+        /// データの受信
+        /// </summary>
+        /// <param name="ar"></param>
         private void ConnectCallback(IAsyncResult ar)
         {
             var tcp = (TcpClient)ar.AsyncState;
@@ -141,15 +172,19 @@ namespace HoloLensModule.Network
             tcp.ReceiveTimeout = 100;
             stream = tcp.GetStream();
             var bytes = new byte[tcp.ReceiveBufferSize];
+            //接続OKイベント発生
+            OnConnected(new EventArgs());
             while (isActiveThread)
             {
                 try
                 {
                     var num = stream.Read(bytes, 0, bytes.Length);
+                    //データ受信待ち
                     if (num > 0)
                     {
                         var data = new byte[num];
                         Array.Copy(bytes, 0, data, 0, num);
+                        //受信データはイベントで処理
                         if (ListenerMessageEvent != null) ListenerMessageEvent(Encoding.UTF8.GetString(data));
                         if (ListenerByteEvent != null) ListenerByteEvent(data);
                     }
