@@ -11,7 +11,6 @@ public class TCPServerExample : MonoBehaviour
 
     [SerializeField] MeshRenderer box;
     TCPServerManager tServer;
-    StateObject serverState = StateObject.stateObject;
     TransferData transferData = TransferData.transferData;
 
     Color color;

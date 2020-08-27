@@ -23,7 +23,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/VuforiaTest.unity
     guid: 3531dd87348d5624d99164aa113a144f
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/TCPIPClientTest.unity
     guid: 82b648d03af432c469ae1a699b85d665
   m_configObjects: {}
