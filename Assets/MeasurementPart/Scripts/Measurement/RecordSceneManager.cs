@@ -8,15 +8,6 @@ using System;
 
 public class RecordSceneManager : MonoBehaviour
 {
-    //設定値
-    //サンプリング周波数
-    [SerializeField]
-    InputField InFs;
-    //録音時間(2のべき乗)
-    [SerializeField]
-    InputField InSampleLength;
-
-
     //録音ボタン
     [SerializeField]
     Button rButton;
@@ -54,10 +45,8 @@ public class RecordSceneManager : MonoBehaviour
             Debug.Log(asioDriverIDName);
         }
 
-        if (InFs != null)
-            fs = int.Parse(InFs.text);
-        if (InSampleLength != null)
-            sampleLength = int.Parse(InSampleLength.text);
+        fs = MeasurementParameter.Fs;
+        sampleLength = MeasurementParameter.SampleNum;
 
         //Asioスタート
         string canStart = asiocsharpdll.PrepareAsio("MOTU Pro Audio", fs, sampleLength);

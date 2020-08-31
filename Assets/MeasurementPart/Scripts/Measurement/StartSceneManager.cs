@@ -25,10 +25,28 @@ public class StartSceneManager : MonoBehaviour
     [SerializeField]
     Dropdown mSetList;
 
+    //サンプリング周波数、サンプル数
+    [SerializeField]
+    InputField infs;
+    [SerializeField]
+    InputField inSampleLength;
+    SceneManage sceneManage;
+
     // Start is called before the first frame update
     //シーンを変更してもパラメータは変化されてないことを可視化
     void Start()
     {
+        try
+        {
+            sceneManage = GameObject.Find("SceneManager").GetComponent<SceneManage>();
+        }
+        catch(Exception e)
+        {
+            Debug.LogWarning(e);
+        }
+        infs.text = MeasurementParameter.Fs.ToString();
+        inSampleLength.text = MeasurementParameter.SampleNum.ToString();
+
         //UI、およびMeasurementParameterの更新
         UpdateParameter();
         //使用できるマイクセットの更新
@@ -155,6 +173,16 @@ public class StartSceneManager : MonoBehaviour
             MeasurementParameter.CalibValue[i] = micSet.calibData[i];
         }
     }
+
+    //シーン遷移を管理
+    public void LoadScene(string sceneName)
+    {
+        MeasurementParameter.Fs = int.Parse(infs.text);
+        MeasurementParameter.SampleNum = int.Parse(inSampleLength.text);
+        sceneManage.MoveScene(sceneName);
+    }
+
+
     #region debug_only
     private void Update()
     {

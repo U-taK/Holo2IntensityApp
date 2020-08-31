@@ -41,4 +41,13 @@ public class MeasurementParameter : MonoBehaviour
 
     //マイクセットの名前
     public static string mSetName = "default";
+
+    //Asioのドライバー名
+    static string asioDriver = "MOTU Pro Audio";
+
+    public static string AsioDriverName
+    {
+        set { asioDriver = value; }
+        get { return asioDriver; }
+    }
 }
