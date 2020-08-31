@@ -4,8 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using AsioCSharpDll;
 using System.IO;
+using System;
 
-public class CalibManager : MonoBehaviour
+public class RecordSceneManager : MonoBehaviour
 {
     //設定値
     //サンプリング周波数
@@ -28,6 +29,12 @@ public class CalibManager : MonoBehaviour
 
     //録音可能か
     bool canRec = false;
+
+    //接続断イベント
+    public delegate void AsioReady(EventArgs e);
+    public event AsioReady OnAsioReady;
+    public event AsioReady AsioNotReady;
+
 
     // Start is called before the first frame update
     void Start()
@@ -57,8 +64,13 @@ public class CalibManager : MonoBehaviour
         Debug.Log(canStart);
         if (canStart == "Asio start")
         {
+            OnAsioReady(new EventArgs());
             rButton.interactable = true;
             canRec = true;
+        }
+        else
+        {
+            AsioNotReady(new EventArgs());
         }
 
     }
