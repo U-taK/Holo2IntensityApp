@@ -50,4 +50,58 @@ public class MeasurementParameter : MonoBehaviour
         set { asioDriver = value; }
         get { return asioDriver; }
     }
+
+    //周波数バンド
+    static int freqMin = 700;
+    static int freqMax = 1000;
+    public static int FreqMin
+    {
+        set { freqMin = value; }
+        get { return freqMin; }
+    }
+    public static int FreqMax
+    {
+        set { freqMax = value; }
+        get { return freqMax; }
+    }
+
+
+    //気体密度
+    public static float Temp = 25;
+    public static float Atm = 1013;
+    static float atmDensity = 1.02f;
+    public static float AtmDensity
+    {
+        set { atmDensity = value; }
+        get { return atmDensity; }
+    }
+
+    //プロット間隔
+    static float objInterval = 0.1f;
+    public static float ObjInterval
+    {
+        set { objInterval = value; }
+        get { return objInterval; }
+    }
+    //インテンシティのレベルレンジ
+    static float minIntensity = 65;
+    public static float MinIntensity
+    {
+        set { minIntensity = value; }
+        get { return minIntensity; }
+    }
+    static float maxIntensity = 105;
+    public static float MaxIntensity
+    {
+        set { maxIntensity = value; }
+        get { return maxIntensity; }
+    }
+
+    //保存先のパス
+    static string saveDir = "";
+    public static string SaveDir
+    {
+        set { saveDir = value; }
+        get { return saveDir; }
+    }
 }
