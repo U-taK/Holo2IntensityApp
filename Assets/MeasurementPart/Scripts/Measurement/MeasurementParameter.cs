@@ -104,4 +104,18 @@ public class MeasurementParameter : MonoBehaviour
         set { saveDir = value; }
         get { return saveDir; }
     }
+
+    public static int colormapID = 2;//0がgrayscale,1がparula,2がjet
+    public static float lvMin = 60;
+    public static float lvMax = 105;
+    public static float objSize = 0.05f;
+
+    //HoloLensから送信されてきたデータを設定に反映
+    public static void HoloLensParameterUpdate(SettingSender setting)
+    {
+        colormapID = setting.colorMapID;
+        lvMax = setting.lvMax;
+        lvMin = setting.lvMin;
+        setting.objSize = objSize;
+    }
 }
