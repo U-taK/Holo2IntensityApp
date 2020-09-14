@@ -1,13 +1,15 @@
-﻿using System.Collections;
+﻿/////////////////////////////////
+///HoloLens2がServerに送信するクラス
+/////////////////////////////////
+
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum SendType
-{
-    None,
-    PositionSender,
-    SettingSender
-}
+
+/// <summary>
+/// 送信オブジェクトの親クラス
+/// </summary>
 public class HoloLensMessage
 {
     public string name;
@@ -24,7 +26,9 @@ public class HoloLensMessage
 
     }
 }
-
+/// <summary>
+/// 座標送信時に使用
+/// </summary>
 public class SendPosition : HoloLensMessage
 {
     public Vector3 sendPos;
@@ -43,6 +47,9 @@ public class SendPosition : HoloLensMessage
     }
 }
 
+/// <summary>
+/// 設定更新時に使用(特に最初の設定)
+/// </summary>
 public class SettingSender: HoloLensMessage
 {
     public int colorMapID;

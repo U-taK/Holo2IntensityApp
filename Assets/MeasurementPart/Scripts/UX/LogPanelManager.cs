@@ -65,8 +65,9 @@ public class LogPanelManager: MonoBehaviour{
         Writelog();
     }
 
-    public void WriteConsole(int num, Vector3 sendPos, Vector3 intensity, float intensityLevel)
+    public void WriteConsole(int num, Vector3 sendPos, Vector3 intensity)
     {
+        var intensityLevel = AcousticMathNew.CalcuIntensityLevel(intensity);
         logIntensity.text =
             "Send Position is x:" + sendPos.x.ToString("f2") + " y:" + sendPos.y.ToString("f2") + " z:" + sendPos.z.ToString("f2") +
             "\n Intensity Data (" + num.ToString() + "is \n x: " + intensity.x.ToString("F12") +

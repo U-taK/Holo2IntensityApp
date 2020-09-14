@@ -118,4 +118,7 @@ public class MeasurementParameter : MonoBehaviour
         lvMin = setting.lvMin;
         setting.objSize = objSize;
     }
+
+    //データの保存数
+    public static int plotNumber;
 }
