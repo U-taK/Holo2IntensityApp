@@ -57,17 +57,23 @@ public class TransferData
             try
             {
                 data = JsonUtility.FromJson<T>(shortage);
-                shortage = null;
+                
                 return true;
             }
             catch (Exception e)
             {
-                Debug.Log(e);
+
             }
         }
 
         data = default;
         return false;
+    }
+
+    public void DesirializeJson<T>(out T data)
+    {
+        data = JsonUtility.FromJson<T>(shortage);
+        shortage = null;
     }
 
 }
