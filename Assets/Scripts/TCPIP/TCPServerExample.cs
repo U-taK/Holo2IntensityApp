@@ -13,8 +13,19 @@ public class TCPServerExample : MonoBehaviour
     TCPServerManager tServer;
     TransferData transferData = TransferData.transferData;
 
+    public List<MeshParts> meshParts;
+
+    [SerializeField]
+    GameObject origin;
+
+    [SerializeField]
+    Material material;
+
     Color color;
     bool GotData = false;
+
+    Queue<SpatialMapData> spatialMapDatas = new Queue<SpatialMapData>();
+
     // Start is called before the first frame update
     void Start()
     {
@@ -36,6 +47,12 @@ public class TCPServerExample : MonoBehaviour
         {
             box.material.color = color;
             GotData = false;
+        }
+
+        if (spatialMapDatas.Count > 0)
+        {
+            var mapData = spatialMapDatas.Dequeue();
+            LoadMesh(mapData);
         }
     }
 
@@ -105,6 +122,51 @@ public class TCPServerExample : MonoBehaviour
         }
     }
 
+    void LoadMesh(SpatialMapData data)
+    {
+        StartCoroutine("ReproMesh", data);
+    }
+
+    IEnumerator ReproMesh(SpatialMapData data)
+    {
+        int mCount = data.meshCount;
+        for(int m = 0;m< mCount; m++)
+        {
+            var parts = data.meshParts[m];
+
+            //Meshを作成
+            var mesh = new Mesh();
+            mesh.vertices = parts.vertices;
+            mesh.triangles = parts.triangles;
+            // Reconstruct the normals from the vertices and triangles.
+            mesh.RecalculateNormals();
+            Debug.Log("Mesh Done " + m);
+            yield return null;
+
+            var surface = new GameObject("Surface-" + m, componentsRequiredForSurfaceMesh);
+            surface.transform.SetParent(origin.transform);
+            var filter = surface.GetComponent<MeshFilter>();
+            filter.sharedMesh = mesh;
+
+            var renderer = surface.GetComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+
+            var collider = surface.GetComponent<MeshCollider>();
+            collider.sharedMesh = null;
+            collider.sharedMesh = filter.sharedMesh;
+            Debug.Log("Object Instantiate " + m);
+            yield return null;
+        }       
+        yield return null;
+    }
+
+    protected readonly Type[] componentsRequiredForSurfaceMesh =
+        {
+            typeof(MeshFilter),
+            typeof(MeshRenderer),
+            typeof(MeshCollider)
+        };
+
     /// <summary>
 	/// 接続断イベント
 	/// </summary>
@@ -143,6 +205,16 @@ public class TCPServerExample : MonoBehaviour
                color = Color.red;
                 Debug.Log(data.keyword + "番号" + data.testNum.ToString()
                 + "コメント:" + data.Comment);
+            }
+            else if (data.keyword == "Map")
+            {
+                var mapData = new SpatialMapData();
+                transferData.DesirializeJson<SpatialMapData>(out mapData);
+                color = Color.green;
+                Debug.Log("mesh count: " + mapData.meshCount);
+                meshParts = mapData.meshParts;
+                spatialMapDatas.Enqueue(mapData);
+                                
             }
         }
     }

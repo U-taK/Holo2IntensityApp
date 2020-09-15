@@ -24,9 +24,12 @@ public class TCPClientExample : MonoBehaviour
     String num_string,mes_string;
     
     TCPClientManager tClient;
+
     TransferData transferData = TransferData.transferData;
     bool gotData = false;
 
+    [SerializeField]
+    Mesh meshTest;
     // Start is called before the first frame update
     void Start()
     {
@@ -42,6 +45,10 @@ public class TCPClientExample : MonoBehaviour
             number.text = num_string;
             message.text = mes_string;
             gotData = false;
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha6))
+        {
+            SendPattern4();
         }
     }
 
@@ -113,6 +120,39 @@ public class TCPClientExample : MonoBehaviour
         TransferParent sendData2 = new TransferParent("Test2", "Test2 sender", 5);
         string json = transferData.SerializeJson<TransferParent>(sendData2);
         //送信
+        try
+        {
+            tClient.SendMessage(json);
+        }
+        catch (Exception ex)
+        {
+            Debug.Log(ex.Message);
+        }
+    }
+
+    //空間マップ送信(ボタンに張り付け)
+    public void SendPattern3()
+    {
+        var observer = GetComponent<CustomFileSurfaceObserver>();
+        var data = observer.MeshSend();
+
+        string json = transferData.SerializeJson<SpatialMapData>(data);
+        try
+        {
+            tClient.SendMessage(json);
+        }
+        catch (Exception ex)
+        {
+            Debug.Log(ex.Message);
+        }
+    }
+    //mesh送信テスト
+    public void SendPattern4()
+    {
+        var mTest = new MeshParts(meshTest);
+        var sTest = new SpatialMapData(1);
+        sTest.meshParts.Add(mTest);
+        string json = transferData.SerializeJson<SpatialMapData>(sTest);
         try
         {
             tClient.SendMessage(json);
