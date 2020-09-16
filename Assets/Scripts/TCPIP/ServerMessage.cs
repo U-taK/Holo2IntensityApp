@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[Serializable]
 public class ServerMessage
 {
     public SendType sendType = SendType.None;
@@ -11,6 +13,7 @@ public class ServerMessage
     }
 }
 
+[Serializable]
 public class IntensityPackage:ServerMessage
 {
     public Vector3 sendPos;
@@ -39,6 +42,7 @@ public class IntensityPackage:ServerMessage
     }
 }
 
+[Serializable]
 public class ReCalcDataPackage: ServerMessage
 {
     public int storageNum;
