@@ -16,6 +16,8 @@ public class TransferData
     private string shortage = null;
     //情報受信したらtrue
     private bool gotData = false;
+    //仮に置く場所
+    private string instantJson;
 
     ///<summary>
     ///特定の型をシリアライズ
@@ -41,6 +43,7 @@ public class TransferData
             try
             {
                 data = JsonUtility.FromJson<T>(json);
+                instantJson = json;
                 return true;
             }
             //Missing a comma or ']' after an array element.対策
@@ -57,12 +60,13 @@ public class TransferData
             try
             {
                 data = JsonUtility.FromJson<T>(shortage);
-                
+                instantJson = shortage;
+                shortage = null;
                 return true;
             }
             catch (Exception e)
             {
-
+                
             }
         }
 
@@ -72,8 +76,8 @@ public class TransferData
 
     public void DesirializeJson<T>(out T data)
     {
-        data = JsonUtility.FromJson<T>(shortage);
-        shortage = null;
+        data = JsonUtility.FromJson<T>(instantJson);
+        instantJson = null;
     }
 
 }
