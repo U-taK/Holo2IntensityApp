@@ -36,6 +36,25 @@ namespace uOSC
             return msPoint;
         }
 
+        public GameObject CreateInstantObj(IntensityPackage package, Color vecColor, float objSize)
+        {
+            GameObject msPoint = new GameObject("measurepoint" + package.num);
+            msPoint.transform.parent = standardMarker.transform;
+            msPoint.transform.localPosition = package.sendPos;
+            msPoint.transform.localRotation = package.sendRot;
+
+            GameObject VectorObj = Instantiate(cone) as GameObject;
+            VectorObj.transform.localScale = new Vector3(objSize, objSize, objSize * 4f);
+            VectorObj.transform.parent = msPoint.transform;
+            VectorObj.transform.localPosition = Vector3.zero;
+            VectorObj.transform.localRotation = Quaternion.LookRotation(10000000000 * package.intensity);
+            VectorObj.transform.GetComponent<Renderer>().material.color = vecColor;
+            VectorObj.name = "IntensityObject";
+            intensities.Add(package.num, VectorObj);
+            measureNo = package.num;
+            return msPoint;
+        }
+
         //色変更
         public void ChangeIntensityObj(int No, Vector3 newIntensity, Color color)
         {

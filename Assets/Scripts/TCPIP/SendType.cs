@@ -7,5 +7,6 @@ public enum SendType
     PositionSender,
     SettingSender,
     Intensity,
-    ReCalcData
+    ReCalcData,
+    SpatialMap
 }

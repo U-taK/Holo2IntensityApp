@@ -1,4 +1,9 @@
-﻿using Microsoft.MixedReality.Toolkit;
+﻿////
+///空間マップテスト用コード
+///
+
+
+using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.SpatialAwareness;
 using System;
 using System.Collections;
@@ -66,38 +71,7 @@ public class SpatialMapData : TransferParent
     }
 }
 
-[Serializable]
-public class MeshParts
-{
-    //頂点数
-    public int vertCount;
-    //メッシュ構成順番の長さ
-    public int trianglesCount;
 
-    //頂点
-    public Vector3[] vertices;
-
-
-    //メッシュ構成順番
-    public int[] triangles;
-
-    public MeshParts(int vCount, int tCount, Vector3[] vertices, int[] triangles)
-    {
-        this.vertCount = vCount;
-        this.trianglesCount = tCount;
-        this.vertices = vertices;
-        this.triangles = triangles;
-    }
-
-    public MeshParts(Mesh mesh)
-    {
-        this.vertCount = mesh.vertexCount;
-        this.trianglesCount = mesh.triangles.Length;
-        this.vertices = mesh.vertices;
-        this.triangles = mesh.triangles;
-
-    }
-}
 
 //////////////
 ///meshの必要パート

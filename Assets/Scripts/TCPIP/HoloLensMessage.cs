@@ -74,3 +74,63 @@ public class SettingSender: HoloLensMessage
         sendType = SendType.SettingSender;
     }
 }
+
+/// <summary>
+/// 空間マップを測定開始前に送信
+/// </summary>
+[Serializable]
+public class SpatialMapSender : HoloLensMessage
+{
+    //メッシュの数
+    public int meshCount;
+    //メッシュの中身
+    public List<MeshParts> meshParts;
+
+    public SpatialMapSender(string name, int meshCount) : base(name)
+    {
+        sendType = SendType.SpatialMap;
+        this.meshCount = meshCount;
+        meshParts = new List<MeshParts>();
+    }
+
+    public SpatialMapSender() : base()
+    {
+        sendType = SendType.SpatialMap;
+    }
+}
+
+/// <summary>
+/// 空間マップを構成するために1つ1つのMeshの構成内容
+/// </summary>
+[Serializable]
+public class MeshParts
+{
+    //頂点数
+    public int vertCount;
+    //メッシュ構成順番の長さ
+    public int trianglesCount;
+
+    //頂点
+    public Vector3[] vertices;
+
+
+    //メッシュ構成順番
+    public int[] triangles;
+
+    public MeshParts(int vCount, int tCount, Vector3[] vertices, int[] triangles)
+    {
+        this.vertCount = vCount;
+        this.trianglesCount = tCount;
+        this.vertices = vertices;
+        this.triangles = triangles;
+    }
+
+    public MeshParts(Mesh mesh)
+    {
+        this.vertCount = mesh.vertexCount;
+        this.trianglesCount = mesh.triangles.Length;
+        this.vertices = mesh.vertices;
+        this.triangles = mesh.triangles;
+
+    }
+}

@@ -73,9 +73,16 @@ public class UIPanelManager : MonoBehaviour
     {
         this.gameObject.SetActive(false);
         if (type == measureType.measure)
+        {
+            //UDPの場合
             UIManager._measure = true;
+            //TCPの場合
+            Holo2MeasurementParameter._measure = true;
+        }
+        //UDPの場合
         UIManager._instance = true;
-
+        //TCPの場合
+        Holo2MeasurementParameter._instance = true;
     }
-    //
+
 }
