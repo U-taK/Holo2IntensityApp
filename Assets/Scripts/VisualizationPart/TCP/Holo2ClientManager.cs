@@ -8,6 +8,7 @@ using uOSC;
 
 [RequireComponent(typeof(Holo2FileSurfaceObserver))]
 [RequireComponent(typeof(InstanceManager))]
+[RequireComponent(typeof(Holo2UIManager))]
 public class Holo2ClientManager : MonoBehaviour
 {
     TCPClientManager tClient;
@@ -16,6 +17,7 @@ public class Holo2ClientManager : MonoBehaviour
 
     Holo2FileSurfaceObserver surfaceObserver;
     InstanceManager instanceMaanger;
+    Holo2UIManager uIManager;
 
     bool gotData;
 
@@ -37,13 +39,19 @@ public class Holo2ClientManager : MonoBehaviour
 
     List<int> measureID = new List<int>();
 
+    //接続状態が変化したら変更
+    bool c_status_changed = false;
+    int c_counter = 0;
+
     /// <summary>
     /// 準備ができたら
     /// </summary>
     public void StartTCPClient()
     {
+        uIManager = gameObject.GetComponent<Holo2UIManager>();
+        uIManager.UpdateUIParameter();
         string host = Holo2MeasurementParameter.IP;
-        surfaceObserver.GetComponent<Holo2FileSurfaceObserver>();
+        surfaceObserver = gameObject.GetComponent<Holo2FileSurfaceObserver>();
 
         try
         {
@@ -81,7 +89,20 @@ public class Holo2ClientManager : MonoBehaviour
                 var package = recalcDataPackages.Dequeue();
                 StartCoroutine("ReproIntensityMap", package);
             }
-        }   
+        }
+
+        //接続状態をUIの上部ランプで判断できるようにしている
+        if (c_status_changed)
+        {
+
+            if (c_counter % 2 == 0)
+                c_status.GetComponent<MeshRenderer>().material.color = Color.green;
+            else
+                c_status.GetComponent<MeshRenderer>().material.color = Color.red;
+           
+            c_status_changed = false;
+            c_counter++;
+        }
     }
 
     IEnumerator InstantObject(IntensityPackage package)
@@ -162,11 +183,12 @@ public class Holo2ClientManager : MonoBehaviour
     /// <returns></returns>
     private IEnumerator SendData()
     {
+        yield return new WaitForSeconds(1 / 6);
         int counter = 0;
         while (Holo2MeasurementParameter._measure)
         {
             // [TODO] 時間固定(10fps)で送り続けています。どうするかは未定
-            yield return new WaitForSeconds(1 / 6);
+            yield return new WaitForSeconds(1);
             if (UIManager._measure)
             {
                 micPositionMirror.GetSendInfo(out sendPos, out sendRotate);
@@ -223,14 +245,14 @@ public class Holo2ClientManager : MonoBehaviour
     void tClient_OnDisconnected(object sender, EventArgs e)
     {
         Debug.Log("Client接続解除");
-        c_status.GetComponent<Renderer>().material.color = Color.red;
+        c_status_changed = true;
         Holo2MeasurementParameter.on_connected = false;
     }
 
     void tClient_OnConnected(EventArgs e)
     {
-        Debug.Log("Serverと接続完了");
-        c_status.GetComponent<Renderer>().material.color = Color.green;
+        Debug.Log("Serverと接続完了");        
         Holo2MeasurementParameter.on_connected = true;
+        c_status_changed = true;
     }
 }
