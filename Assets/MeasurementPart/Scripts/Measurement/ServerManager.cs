@@ -1,9 +1,4 @@
-﻿///////////////////////////////////////////
-///サーバの挙動を管理
-/// [TODO] オブジェクト削除時の動作を導入
-/// ///////////////////////////////////////
-
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using HoloLensModule.Network;
@@ -12,13 +7,11 @@ using AsioCSharpDll;
 
 public class ServerManager : MonoBehaviour
 {
-    // Start is called before the first frame update
-
-    //ポート
-    [SerializeField] int Port = 3333;
-    
     TCPServerManager tServer;
     TransferData transferData = TransferData.transferData;
+
+    //ポート番号規定値
+    int port = 3333;
 
     [SerializeField]
     GameObject UIManager;
@@ -27,33 +20,62 @@ public class ServerManager : MonoBehaviour
     SettingManager settingManager;
     IntensityManager intensityManager;
 
+    Holo2FileSurfaceObserver surfaceObserver;
     //送信するインテンシティデータ
     IntensityPackage sendIntensityData;
 
+    Queue<SpatialMapSender> spatialMaps = new Queue<SpatialMapSender>();
 
+    Queue<SendPosition> positionPackages = new Queue<SendPosition>();
+
+    // Start is called before the first frame update
     void Start()
     {
         logPanelManager = UIManager.GetComponent<LogPanelManager>();
         settingManager = UIManager.GetComponent<SettingManager>();
         intensityManager = gameObject.GetComponent<IntensityManager>();
+        surfaceObserver = gameObject.GetComponent<Holo2FileSurfaceObserver>();
 
-        //ASIOスタート
+        //Asioスタート
         string instLog = asiocsharpdll.PrepareAsio(MeasurementParameter.AsioDriverName, MeasurementParameter.Fs, MeasurementParameter.SampleNum);
         logPanelManager.Writelog(instLog);
-
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if (Input.GetKeyDown(KeyCode.Alpha7))
+            StartTCPServer();
+
+        if (spatialMaps.Count > 0)
+        {
+            var mapData = spatialMaps.Dequeue();
+            surfaceObserver.LoadMesh(mapData);
+        }
+        if (positionPackages.Count > 0)
+        {
+            var rPosition = positionPackages.Dequeue();
+            StartCoroutine("SendIntensity", rPosition);
+        }
+    }
+
+    IEnumerator SendIntensity(SendPosition position)
+    {
+        //送信するインテンシティオブジェクトに変換
+        sendIntensityData = intensityManager.MicPosReceived(position);
+        yield return null;
+        if (sendIntensityData.sendType == SendType.Intensity)
+        {
+            tServer.SendMessage(transferData.SerializeJson<IntensityPackage>(sendIntensityData));
+            logPanelManager.WriteConsole(sendIntensityData.num, sendIntensityData.sendPos, sendIntensityData.intensity);
+        }
+        yield return null;
     }
 
     /**tcp始めるボタンに紐づけ**/
     public void StartTCPServer()
     {
-
-        tServer = new TCPServerManager(Port);
+        tServer = new TCPServerManager(port);
         //データ受信イベント
         tServer.ListenerMessageEvent += tServer_OnReceiveData;
         tServer.OnDisconnected += tServer_OnDisconnected;
@@ -62,59 +84,72 @@ public class ServerManager : MonoBehaviour
         //計測データの設定反映
         settingManager.InitParam();
 
-        Debug.Log("Init setting");
+        Debug.Log("Init Setting");
     }
 
     /// <summary>
-	/// 接続断イベント
-	/// </summary>
+    /// 接続断イベント
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
     void tServer_OnDisconnected(object sender, EventArgs e)
     {
         Debug.Log("Server接続解除");
     }
 
     /// <summary>
-	/// 接続OKイベント
-	/// </summary>
+    /// 接続OKイベント
+    /// </summary>
+    /// <param name="e"></param>
     void tServer_OnConnected(EventArgs e)
     {
         Debug.Log("Clientと接続完了");
-        logPanelManager.Writelog("Clientと接続完了");
+    } 
+
+    /// <summary>
+    /// アプリ終了時に呼び出し、Serverを止める
+    /// </summary>
+    public void StopTCPServer()
+    {
+        try
+        {
+            //closeしてるけど送受信がどうなってるかは謎
+            tServer.DisConnectClient();
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e);
+        }
     }
 
     /// <summary>
-	/// データ受信イベント
-	/// </summary>
+    /// データ受信イベント
+    /// </summary>
+    /// <param name="ms"></param>
     void tServer_OnReceiveData(string ms)
     {
         var message = new HoloLensMessage();
-        if (transferData.CanDesirializeJson<HoloLensMessage>(ms, out message))
+        if(transferData.CanDesirializeJson<HoloLensMessage>(ms,out message))
         {
             switch (message.sendType)
             {
-                case SendType.PositionSender://HoloLens側のマイクロホン位置を取得した際にオブジェクト生成を管理する
-                    if (transferData.CanDesirializeJson<SendPosition>(ms, out var sendPosition))
-                    {
-                        //送信するインテンシティオブジェクトに変換
-                        sendIntensityData = intensityManager.MicPosReceived(sendPosition);
-                        if (sendIntensityData.sendType == SendType.Intensity)
-                        {
-                            tServer.SendMessage(transferData.SerializeJson<IntensityPackage>(sendIntensityData));
-                            logPanelManager.WriteConsole(sendIntensityData.num, sendIntensityData.sendPos, sendIntensityData.intensity);
-                        }
-                            
-                    }
+                case SendType.PositionSender: //HoloLens側のマイクロホン位置を所得
+                    transferData.DesirializeJson<SendPosition>(out var sendPosition);
+                    Debug.Log("[Server] Send Position num;"+ sendPosition.name +  " position: " + sendPosition.sendPos.x + "rotation" + sendPosition.sendRot.x);
+                    positionPackages.Enqueue(sendPosition);
                     break;
-                case SendType.SettingSender://HoloLens側でsettingするパラメータを反映
-                    if(transferData.CanDesirializeJson<SettingSender>(ms, out var holoSetting))
-                        MeasurementParameter.HoloLensParameterUpdate(holoSetting);
+                case SendType.SettingSender:
+                    transferData.DesirializeJson<SettingSender>(out var holoSetting);
+                    MeasurementParameter.HoloLensParameterUpdate(holoSetting);
+                    Debug.Log("[Server] Holo setting ColorMapID: " + holoSetting.colorMapID);
+                    break;
+                case SendType.SpatialMap:
+                    transferData.DesirializeJson<SpatialMapSender>(out var spatialMapSender);
+                    spatialMaps.Enqueue(spatialMapSender);
                     break;
             }
         }
-
-
     }
-
 
     /// <summary>
     /// 
@@ -132,28 +167,9 @@ public class ServerManager : MonoBehaviour
         tServer.SendMessage(json2);
     }
 
-
     private void OnApplicationQuit()
     {
         if (tServer != null)
             StopTCPServer();
     }
-
-    /**tcp止めるボタンにも紐付け可能**/
-    /// <summary>
-	/// TCPServer停止
-	/// </summary>
-    public void StopTCPServer()
-    {
-        try
-        {
-            //closeしてるけど送受信がどうなってるかは謎
-            tServer.DisConnectClient();
-        }
-        catch (Exception e)
-        {
-            Debug.Log(e);
-        }
-    }
-
 }
