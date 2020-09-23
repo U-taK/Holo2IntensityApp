@@ -11,7 +11,7 @@ using uOSC;
 [RequireComponent(typeof(Holo2UIManager))]
 public class Holo2ClientManager : MonoBehaviour
 {
-    TCPClientManager tClient;
+    TCPClient tClient;
 
     TransferData transferData = TransferData.transferData;
 
@@ -55,11 +55,17 @@ public class Holo2ClientManager : MonoBehaviour
 
         try
         {
-            tClient = new TCPClientManager(host, port);
+            tClient = new TCPClient(host, port);
             //データ受信イベント
-            tClient.ListenerMessageEvent += tClient_OnReceiveData;
+#if WINDOWS_UWP
+            tClient.ListenerMessageEvent +=  tClient_OnReceiveData;
+#else
+            tClient.OnReceiveData += new TCPClient.ReceiveEventHandler(tClient_OnReceiveData);
+#endif
             tClient.OnConnected += tClient_OnConnected;
             tClient.OnDisconnected += tClient_OnDisconnected;
+            //受信開始
+            tClient.StartReceive();
             Debug.Log("Client OK");
         }
         catch (Exception ex)
@@ -143,7 +149,7 @@ public class Holo2ClientManager : MonoBehaviour
         string json = transferData.SerializeJson<SettingSender>(sendSettingData);
         try
         {
-            tClient.SendMessage(json);
+            tClient.StartSend(json);
         }
         catch (Exception ex)
         {
@@ -161,7 +167,7 @@ public class Holo2ClientManager : MonoBehaviour
 
         try
         {
-            tClient.SendMessage(jsonS);
+            tClient.StartSend(jsonS);
         }
         catch (Exception ex)
         {
@@ -195,7 +201,7 @@ public class Holo2ClientManager : MonoBehaviour
                 //送信用データの作成
                 var sendPosition = new SendPosition(counter++.ToString(), sendPos, sendRotate);
                 string json = transferData.SerializeJson<SendPosition>(sendPosition);
-                tClient.SendMessage(json);
+                tClient.StartSend(json);
                 //Debug.Log("send");
             }
         }
