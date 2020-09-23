@@ -7,7 +7,7 @@ using AsioCSharpDll;
 
 public class ServerManager : MonoBehaviour
 {
-    TCPServerManager tServer;
+    TCPServer tServer;
     TransferData transferData = TransferData.transferData;
 
     //ポート番号規定値
@@ -66,7 +66,7 @@ public class ServerManager : MonoBehaviour
         yield return null;
         if (sendIntensityData.sendType == SendType.Intensity)
         {
-            tServer.SendMessage(transferData.SerializeJson<IntensityPackage>(sendIntensityData));
+            tServer.SendAllClient(transferData.SerializeJson<IntensityPackage>(sendIntensityData));
             logPanelManager.WriteConsole(sendIntensityData.num, sendIntensityData.sendPos, sendIntensityData.intensity);
         }
         yield return null;
@@ -75,11 +75,13 @@ public class ServerManager : MonoBehaviour
     /**tcp始めるボタンに紐づけ**/
     public void StartTCPServer()
     {
-        tServer = new TCPServerManager(port);
+        //ローカルサーバーを使うことを推定
+        var host = "127.0.0.1";
+        tServer = new TCPServer(host,port);
         //データ受信イベント
-        tServer.ListenerMessageEvent += tServer_OnReceiveData;
-        tServer.OnDisconnected += tServer_OnDisconnected;
-        tServer.OnConnected += tServer_OnConnected;
+        tServer.OnReceiveData += new TCPServer.ReceiveEventHandler(tServer_OnReceiveData);
+        tServer.OnDisconnected += new TCPServer.DisconnectedEventHandler(tServer_OnDisconnected);
+        tServer.OnConnected += new TCPServer.ConnectedEventHandler(tServer_OnConnected);
 
         //計測データの設定反映
         settingManager.InitParam();
@@ -92,7 +94,7 @@ public class ServerManager : MonoBehaviour
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
-    void tServer_OnDisconnected(object sender, EventArgs e)
+    void tServer_OnDisconnected(object sender, EventArgs e,string s)
     {
         Debug.Log("Server接続解除");
     }
@@ -114,7 +116,7 @@ public class ServerManager : MonoBehaviour
         try
         {
             //closeしてるけど送受信がどうなってるかは謎
-            tServer.DisConnectClient();
+            tServer.Close();
         }
         catch (Exception e)
         {
@@ -126,7 +128,7 @@ public class ServerManager : MonoBehaviour
     /// データ受信イベント
     /// </summary>
     /// <param name="ms"></param>
-    void tServer_OnReceiveData(string ms)
+    void tServer_OnReceiveData(object sender, string ms)
     {
         var message = new HoloLensMessage();
         if(transferData.CanDesirializeJson<HoloLensMessage>(ms,out message))
@@ -160,11 +162,11 @@ public class ServerManager : MonoBehaviour
         SettingSender ud_setting = new SettingSender("NewSetting", MeasurementParameter.colormapID, MeasurementParameter.MaxIntensity, MeasurementParameter.MinIntensity, MeasurementParameter.objSize);
         //更新データをHololensに送信
         string json = transferData.SerializeJson<SettingSender>(ud_setting);
-        tServer.SendMessage(json);
+        tServer.SendAllClient(json);
         //再計算を実行
         ReCalcDataPackage reCalcDataPackage = await intensityManager.RecalcIntensity();
         string json2 = transferData.SerializeJson<ReCalcDataPackage>(reCalcDataPackage);
-        tServer.SendMessage(json2);
+        tServer.SendAllClient(json2);
     }
 
     private void OnApplicationQuit()
