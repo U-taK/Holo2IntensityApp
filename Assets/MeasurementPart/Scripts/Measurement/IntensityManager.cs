@@ -24,6 +24,12 @@ public class IntensityManager : MonoBehaviour
     int Num = 0;
 
     int length_bit;
+
+
+    //テスト用変数
+    Vector3 testPos = Vector3.zero;
+    Quaternion testRot = Quaternion.Euler(0, 0, 0);
+    int testNum = 0;
     // Start is called before the first frame update
     void Start()
     {
@@ -33,7 +39,16 @@ public class IntensityManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        /*テストコード
+        if (Input.GetKeyDown(KeyCode.Alpha8))
+        {
+            MeasurementParameter.ObjInterval = 0.05f;
+            testPos += Vector3.right * testNum * 0.1f;
+
+            var sendPosition = new SendPosition(testNum.ToString(), testPos, testRot);
+            MicPosReceivedTester(sendPosition);
+            testNum++;
+        }*/
     }
 
     public IntensityPackage MicPosReceived(SendPosition sendPosition)
@@ -52,9 +67,11 @@ public class IntensityManager : MonoBehaviour
             float intensityLv_dB = AcousticMathNew.CalcuIntensityLevel(intensityDir);
 
             //オブジェクト作成
-            var vectorObj = Instantiate(Cone, Vector3.zero, Quaternion.LookRotation(10000000000 * intensityDir)) as GameObject;
+            var vectorObj = Instantiate(Cone) as GameObject;
             vectorObj.transform.localScale = new Vector3(MeasurementParameter.objSize, MeasurementParameter.objSize, MeasurementParameter.objSize * 4);
             vectorObj.transform.parent = micPoint.transform;
+            vectorObj.transform.localPosition = Vector3.zero;
+            vectorObj.transform.localRotation = Quaternion.LookRotation(10000000000 * intensityDir);
             var vecColor = ColorBar.DefineColor(MeasurementParameter.colormapID, intensityLv_dB, MeasurementParameter.MinIntensity, MeasurementParameter.MaxIntensity);
             vectorObj.transform.GetComponent<Renderer>().material.color = vecColor;
             vectorObj.name = "IntensityObj";
@@ -74,6 +91,44 @@ public class IntensityManager : MonoBehaviour
             return new IntensityPackage();
         }
     }
+    /// <summary>
+    /// テストコード
+    /// </summary>
+    /// <param name="sendPosition"></param>
+    public void MicPosReceivedTester(SendPosition sendPosition)
+    {
+        if (CheckPlotDistance(sendPosition.sendPos))
+        {
+            GameObject micPoint = new GameObject("measurementPoint" + Num);
+            micPoint.transform.parent = copyStandard.transform;
+            micPoint.transform.localPosition = sendPosition.sendPos;
+            micPoint.transform.localRotation = sendPosition.sendRot;
+
+            //intensity計算(テストコード)
+            var intensityDir = Vector3.one;
+            float intensityLv_dB = 82f;
+
+            //オブジェクト作成
+            var vectorObj = Instantiate(Cone) as GameObject;
+            vectorObj.transform.localScale = new Vector3(MeasurementParameter.objSize, MeasurementParameter.objSize, MeasurementParameter.objSize * 4);
+            vectorObj.transform.parent = micPoint.transform;
+            vectorObj.transform.localPosition = Vector3.zero;
+            vectorObj.transform.localRotation = Quaternion.LookRotation(10000000000 * intensityDir);
+            var vecColor = ColorBar.DefineColor(MeasurementParameter.colormapID, intensityLv_dB, MeasurementParameter.MinIntensity, MeasurementParameter.MaxIntensity);
+            vectorObj.transform.GetComponent<Renderer>().material.color = vecColor;
+            vectorObj.name = "IntensityObj";
+            intensities.Add(Num, vectorObj);
+
+            //データそのものを保管
+            double[][] soundSignals = new double[4][];
+            DataStorage data = new DataStorage(Num, sendPosition.sendPos, sendPosition.sendRot, soundSignals, intensityDir);
+            dataStorages.Add(data);
+
+            //送信データを作成
+
+            Num++;
+        }
+    }
 
     //ほかのプロットと距離が離れているかチェック
     //当均等に配置するために精度要素を追加
@@ -89,7 +144,7 @@ public class IntensityManager : MonoBehaviour
         {
             for (int index = 0; index < plotNum; index++)
             {
-                if (!dataStorages[index].CheckPlotDistance(realtimeLocalPosition, MeasurementParameter.ObjInterval)) ;
+                if (!dataStorages[index].CheckPlotDistance(realtimeLocalPosition, MeasurementParameter.ObjInterval)) 
                     return false;
             }
             return true;
