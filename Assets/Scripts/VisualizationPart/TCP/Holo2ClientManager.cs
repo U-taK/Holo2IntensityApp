@@ -215,35 +215,39 @@ public class Holo2ClientManager : MonoBehaviour
     /// <param name="ms">jsonファイル</param>
     void tClient_OnReceiveData(string ms)
     {
-        var message = new ServerMessage();
-        if(transferData.CanDesirializeJson<ServerMessage>(ms, out message))
+        var jsons = transferData.DevideData2Jsons(ms);
+        foreach (string json in jsons)
         {
-            switch (message.sendType)
+            var message = new ServerMessage();
+            if (transferData.CanDesirializeJson<ServerMessage>(json, out message))
             {
-                case SendType.Intensity:
-                    transferData.DesirializeJson<IntensityPackage>(out var intensityData);
-                    var intensityLv = AIMath.CalcuIntensityLevel(intensityData.intensity);
-                    //インテンシティレベルが指定した範囲内なら
-                    if (intensityLv >= Holo2MeasurementParameter.LevelMin || intensityLv <= Holo2MeasurementParameter.LevelMax)
-                    {
-                        //キューに生成予定のインテンシティ情報を埋め込み
-                        intensityPackages.Enqueue(intensityData); 
-                    }
+                switch (message.sendType)
+                {
+                    case SendType.Intensity:
+                        transferData.DesirializeJson<IntensityPackage>(out var intensityData);
+                        var intensityLv = AIMath.CalcuIntensityLevel(intensityData.intensity);
+                        //インテンシティレベルが指定した範囲内なら
+                        if (intensityLv >= Holo2MeasurementParameter.LevelMin || intensityLv <= Holo2MeasurementParameter.LevelMax)
+                        {
+                            //キューに生成予定のインテンシティ情報を埋め込み
+                            intensityPackages.Enqueue(intensityData);
+                        }
 
-                    break;
-                case SendType.SettingSender:
-                    transferData.DesirializeJson<SettingSender>(out var settingSender);
-                    Holo2MeasurementParameter.ColorMapID = settingSender.colorMapID;
-                    Holo2MeasurementParameter.LevelMin = settingSender.lvMin;
-                    Holo2MeasurementParameter.LevelMax = settingSender.lvMax;
-                    Holo2MeasurementParameter.ObjSize = settingSender.objSize;
-                    //Sharingを実装したら追加
-                    //manager.ReadyShare();
-                    break;
-                case SendType.ReCalcData:
-                    transferData.DesirializeJson<ReCalcDataPackage>(out var recalcDataPackage);
-                    recalcDataPackages.Enqueue(recalcDataPackage);
-                    break;
+                        break;
+                    case SendType.SettingSender:
+                        transferData.DesirializeJson<SettingSender>(out var settingSender);
+                        Holo2MeasurementParameter.ColorMapID = settingSender.colorMapID;
+                        Holo2MeasurementParameter.LevelMin = settingSender.lvMin;
+                        Holo2MeasurementParameter.LevelMax = settingSender.lvMax;
+                        Holo2MeasurementParameter.ObjSize = settingSender.objSize;
+                        //Sharingを実装したら追加
+                        //manager.ReadyShare();
+                        break;
+                    case SendType.ReCalcData:
+                        transferData.DesirializeJson<ReCalcDataPackage>(out var recalcDataPackage);
+                        recalcDataPackages.Enqueue(recalcDataPackage);
+                        break;
+                }
             }
         }
     }

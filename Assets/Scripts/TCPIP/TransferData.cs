@@ -19,6 +19,13 @@ public class TransferData
     //仮に置く場所
     private string instantJson;
 
+    ///受信データから複数のjsonファイルに変換
+    public string[] DevideData2Jsons(string ms)
+    {
+        var wordList = ms.Replace("\r\n", "\n").Split(new[] { '\n', '\r' });
+        return wordList;
+    }
+
     ///<summary>
     ///特定の型をシリアライズ
     ///送信するデータにキーワードを含む
