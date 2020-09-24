@@ -134,3 +134,41 @@ public class MeshParts
 
     }
 }
+
+/// <summary>
+/// 空間マップを構成するために1つ1つのMeshの構成内容
+/// </summary>
+[Serializable]
+public class SpatialMesh : HoloLensMessage
+{
+    //頂点数
+    public int vertCount;
+    //メッシュ構成順番の長さ
+    public int trianglesCount;
+
+    //頂点
+    public Vector3[] vertices;
+
+
+    //メッシュ構成順番
+    public int[] triangles;
+
+    public SpatialMesh(string name, int vCount, int tCount, Vector3[] vertices, int[] triangles) : base(name)
+    {
+        sendType = SendType.SpatialMesh;
+        this.vertCount = vCount;
+        this.trianglesCount = tCount;
+        this.vertices = vertices;
+        this.triangles = triangles;
+    }
+
+    public SpatialMesh(string name, Mesh mesh) : base(name)
+    {
+        sendType = SendType.SpatialMesh;
+        this.vertCount = mesh.vertexCount;
+        this.trianglesCount = mesh.triangles.Length;
+        this.vertices = mesh.vertices;
+        this.triangles = mesh.triangles;
+
+    }
+}

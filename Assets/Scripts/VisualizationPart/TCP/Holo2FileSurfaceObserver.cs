@@ -52,6 +52,16 @@ public class Holo2FileSurfaceObserver : MonoBehaviour
         return spatialMapSender;
     }
 
+    //空間マップをjsonへシリアライズ可能なクラスSpatialMapSenderに変換
+    public IMixedRealitySpatialAwarenessMeshObserver MapSendObserver()
+    {
+        // SpatialAwarenessSystemをIMixedRealityDataProviderAccessにキャストしてオブザーバーを取得します
+        var access = CoreServices.SpatialAwarenessSystem as IMixedRealityDataProviderAccess;
+        // 利用可能な最初のメッシュオブザーバーを取得します。通常、登録されているのは1つだけです。
+        var observer = access.GetDataProvider<IMixedRealitySpatialAwarenessMeshObserver>();
+        return observer;
+    }
+
     //SpatialMapSender→空間マップ
     public void LoadMesh(SpatialMapSender data)
     {

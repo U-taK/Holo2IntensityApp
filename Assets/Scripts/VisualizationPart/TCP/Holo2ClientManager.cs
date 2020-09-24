@@ -5,6 +5,8 @@ using HoloLensModule.Network;
 using System;
 using System.Threading.Tasks;
 using uOSC;
+using Microsoft.MixedReality.Toolkit.UI;
+using Microsoft.MixedReality.Toolkit.SpatialAwareness;
 
 [RequireComponent(typeof(Holo2FileSurfaceObserver))]
 [RequireComponent(typeof(InstanceManager))]
@@ -37,11 +39,18 @@ public class Holo2ClientManager : MonoBehaviour
     Queue<IntensityPackage> intensityPackages = new Queue<IntensityPackage>();
     Queue<ReCalcDataPackage> recalcDataPackages = new Queue<ReCalcDataPackage>();
 
+    [SerializeField]
+    private GameObject indicatorObject;
+    private IProgressIndicator indicator;
+
     List<int> measureID = new List<int>();
 
     //接続状態が変化したら変更
     bool c_status_changed = false;
     int c_counter = 0;
+
+    [SerializeField]
+    Mesh meshTest;
 
     /// <summary>
     /// 準備ができたら
@@ -49,7 +58,7 @@ public class Holo2ClientManager : MonoBehaviour
     public void StartTCPClient()
     {
         uIManager = gameObject.GetComponent<Holo2UIManager>();
-        uIManager.UpdateUIParameter();
+        uIManager.InitUIParameter();
         string host = Holo2MeasurementParameter.IP;
         surfaceObserver = gameObject.GetComponent<Holo2FileSurfaceObserver>();
 
@@ -58,14 +67,17 @@ public class Holo2ClientManager : MonoBehaviour
             tClient = new TCPClient(host, port);
             //データ受信イベント
 #if WINDOWS_UWP
-            tClient.ListenerMessageEvent +=  tClient_OnReceiveData;
+            tClient.ListenerMessageEvent +=   new TCPClient.ListenerMessageEventHandler(tClient_OnReceiveData);
 #else
             tClient.OnReceiveData += new TCPClient.ReceiveEventHandler(tClient_OnReceiveData);
 #endif
             tClient.OnConnected += tClient_OnConnected;
             tClient.OnDisconnected += tClient_OnDisconnected;
+#if WINDOWS_UWP
+#else
             //受信開始
             tClient.StartReceive();
+#endif
             Debug.Log("Client OK");
         }
         catch (Exception ex)
@@ -77,7 +89,9 @@ public class Holo2ClientManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        instanceMaanger = GetComponent<InstanceManager>();   
+        instanceMaanger = GetComponent<InstanceManager>();
+
+        indicator = indicatorObject.GetComponent<IProgressIndicator>();
     }
 
     // Update is called once per frame
@@ -143,6 +157,8 @@ public class Holo2ClientManager : MonoBehaviour
     /// </summary>
     public async void SendSetting()
     {
+        //UIパラメータを更新
+        uIManager.UpdateUIParameter();
         //送信オブジェクトをパッケージ化
         var sendSettingData = new SettingSender("", Holo2MeasurementParameter.ColorMapID,
             Holo2MeasurementParameter.LevelMax, Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.ObjSize);
@@ -159,20 +175,29 @@ public class Holo2ClientManager : MonoBehaviour
                 StartTCPClient();
             }
         }
+        await indicator.OpenAsync();
+        indicator.Message = "Mesh to Json";
 
         //空間マップの送信準備
-        var data = await Task.Run(() => surfaceObserver.MapSend());
+        //var data = await Task.Run(() => surfaceObserver.MapSend());
+        //var mTest = new MeshParts(meshTest);
+        //var data = new SpatialMapSender("",1);
+        //data.meshParts.Add(mTest);
+        IMixedRealitySpatialAwarenessMeshObserver observer = await Task.Run(() => surfaceObserver.MapSendObserver());
 
-        string jsonS = await Task.Run(() => transferData.SerializeJson<SpatialMapSender>(data));
-
-        try
+        foreach (SpatialAwarenessMeshObject meshObject in observer.Meshes.Values)
         {
+            indicator.Message = "Serialize Json";
+            // ここでメッシュが取れます
+            Mesh mesh = meshObject.Filter.mesh;
+            SpatialMesh data = new SpatialMesh("newMap", mesh);
+
+            indicator.Message = "Send data";
+            string jsonS = await Task.Run(() => transferData.SerializeJson<SpatialMesh>(data));
             tClient.StartSend(jsonS);
         }
-        catch (Exception ex)
-        {
-            Debug.Log(ex.Message);
-        }
+
+        await indicator.CloseAsync();
     }
 
     /// <summary>

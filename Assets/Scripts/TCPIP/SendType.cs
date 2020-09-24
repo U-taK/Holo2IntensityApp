@@ -8,5 +8,6 @@ public enum SendType
     SettingSender,
     Intensity,
     ReCalcData,
-    SpatialMap
+    SpatialMap,
+    SpatialMesh
 }
