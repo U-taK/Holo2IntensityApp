@@ -23,7 +23,13 @@ public class TransferData
     public string[] DevideData2Jsons(string ms)
     {
         var wordList = ms.Replace("\r\n", "\n").Split(new[] { '\n', '\r' });
-        return wordList;
+        List<string> messages = new List<string>();
+        foreach (var word in wordList)
+        {
+            if (word != "")
+                messages.Add(word);
+        }
+        return messages.ToArray();
     }
 
     ///<summary>

@@ -222,7 +222,7 @@ namespace HoloLensModule.Network
                     OnReceiveData(this, content);
 
                     //受信したのを接続中の全クライアントへ送信
-                    SendAllClient(content);
+                    //SendAllClient(content);
 
                     //TODO:受信中断、再開処理？
                     //受信続行
@@ -285,7 +285,7 @@ namespace HoloLensModule.Network
 
                 Debug.Log(data + "を送信するよ");
                 //データ送信イベント
-                OnSendData(this, data);
+                //OnSendData(this, data);
 
                 // Begin sending the data to the remote device.  
                 handler.BeginSend(byteData, 0, byteData.Length, 0,
@@ -320,7 +320,7 @@ namespace HoloLensModule.Network
 
                 Debug.Log(data + "を送信するよ");
                 //データ送信イベント
-                OnSendData(this, data);
+                //OnSendData(this, data);
 
                 // Begin sending the data to the remote device.  
                 clientSocket.BeginSend(byteData, 0, byteData.Length, 0,

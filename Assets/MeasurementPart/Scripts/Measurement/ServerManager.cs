@@ -76,7 +76,7 @@ public class ServerManager : MonoBehaviour
     public void StartTCPServer()
     {
         //ローカルサーバーを使うことを推定
-        var host = "127.0.0.1";
+        var host = "192.168.0.46";
         tServer = new TCPServer(host,port);
         //データ受信イベント
         tServer.OnReceiveData += new TCPServer.ReceiveEventHandler(tServer_OnReceiveData);
@@ -130,25 +130,29 @@ public class ServerManager : MonoBehaviour
     /// <param name="ms"></param>
     void tServer_OnReceiveData(object sender, string ms)
     {
-        var message = new HoloLensMessage();
-        if(transferData.CanDesirializeJson<HoloLensMessage>(ms,out message))
+        var jsons = transferData.DevideData2Jsons(ms);
+        foreach (var json in jsons)
         {
-            switch (message.sendType)
+            var message = new HoloLensMessage();
+            if (transferData.CanDesirializeJson<HoloLensMessage>(json, out message))
             {
-                case SendType.PositionSender: //HoloLens側のマイクロホン位置を所得
-                    transferData.DesirializeJson<SendPosition>(out var sendPosition);
-                    Debug.Log("[Server] Send Position num;"+ sendPosition.name +  " position: " + sendPosition.sendPos.x + "rotation" + sendPosition.sendRot.x);
-                    positionPackages.Enqueue(sendPosition);
-                    break;
-                case SendType.SettingSender:
-                    transferData.DesirializeJson<SettingSender>(out var holoSetting);
-                    MeasurementParameter.HoloLensParameterUpdate(holoSetting);
-                    Debug.Log("[Server] Holo setting ColorMapID: " + holoSetting.colorMapID);
-                    break;
-                case SendType.SpatialMap:
-                    transferData.DesirializeJson<SpatialMapSender>(out var spatialMapSender);
-                    spatialMaps.Enqueue(spatialMapSender);
-                    break;
+                switch (message.sendType)
+                {
+                    case SendType.PositionSender: //HoloLens側のマイクロホン位置を所得
+                        transferData.DesirializeJson<SendPosition>(out var sendPosition);
+                        Debug.Log("[Server] Send Position num;" + sendPosition.name + " position: " + sendPosition.sendPos.x + "rotation" + sendPosition.sendRot.x);
+                        positionPackages.Enqueue(sendPosition);
+                        break;
+                    case SendType.SettingSender:
+                        transferData.DesirializeJson<SettingSender>(out var holoSetting);
+                        MeasurementParameter.HoloLensParameterUpdate(holoSetting);
+                        Debug.Log("[Server] Holo setting ColorMapID: " + holoSetting.colorMapID);
+                        break;
+                    case SendType.SpatialMap:
+                        transferData.DesirializeJson<SpatialMapSender>(out var spatialMapSender);
+                        spatialMaps.Enqueue(spatialMapSender);
+                        break;
+                }
             }
         }
     }
@@ -173,5 +177,6 @@ public class ServerManager : MonoBehaviour
     {
         if (tServer != null)
             StopTCPServer();
+        asiocsharpdll.StopAsioMain();
     }
 }
