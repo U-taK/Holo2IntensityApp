@@ -50,7 +50,7 @@ public class Holo2ClientManager : MonoBehaviour
     int c_counter = 0;
 
     [SerializeField]
-    Mesh meshTest;
+    GameObject testMap;
 
     /// <summary>
     /// 準備ができたら
@@ -179,6 +179,18 @@ public class Holo2ClientManager : MonoBehaviour
         indicator.Message = "Mesh to Json";
 
         //空間マップの送信準備
+        /* var mapMeshFileters = testMap.GetComponentsInChildren<MeshFilter>();
+        foreach(var mapMeshFilter in mapMeshFileters)
+        {
+            indicator.Message = "Serialize Json";
+            // ここでメッシュが取れます
+            Mesh mesh = mapMeshFilter.sharedMesh;
+            SpatialMesh data = new SpatialMesh("newMap", mesh);
+
+            indicator.Message = "Send data";
+            string jsonS = await Task.Run(() => transferData.SerializeJson<SpatialMesh>(data));
+            tClient.StartSend(jsonS);
+        }*/
         //var data = await Task.Run(() => surfaceObserver.MapSend());
         //var mTest = new MeshParts(meshTest);
         //var data = new SpatialMapSender("",1);
@@ -196,7 +208,7 @@ public class Holo2ClientManager : MonoBehaviour
             string jsonS = await Task.Run(() => transferData.SerializeJson<SpatialMesh>(data));
             tClient.StartSend(jsonS);
         }
-
+        
         await indicator.CloseAsync();
     }
 

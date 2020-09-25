@@ -178,7 +178,6 @@ namespace HoloLensModule.Network
 #if WINDOWS_UWP
         Task.Run(async() =>
         {
-            log += "task start\n";
             try
             {
                 await socket.ConnectAsync(new HostName(host), port.ToString());
@@ -204,7 +203,7 @@ namespace HoloLensModule.Network
             StreamReader reader;
             try
             {
-
+             reader = new StreamReader(socket.InputStream.AsStreamForRead());
             }
             catch (Exception e)
             {
@@ -213,7 +212,6 @@ namespace HoloLensModule.Network
                 return;
             }
             byte[] bytes = new byte[65536];
-            clientState.socketState = StateObject.SocketState.Connected;
             //接続OKイベント発生
             OnConnected(new EventArgs());
             while (isActiveThread)
@@ -357,7 +355,7 @@ namespace HoloLensModule.Network
         public void StartSend(string str)
         {
 #if WINDOWS_UWP
-        byte[] data = enc.GetBytes(str);
+        byte[] data = enc.GetBytes(str + "\r\n");
         if (writetask == null || writetask.IsCompleted == true)
         {
             if (writer != null)

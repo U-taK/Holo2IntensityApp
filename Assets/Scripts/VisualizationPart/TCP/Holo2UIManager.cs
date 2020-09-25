@@ -28,9 +28,10 @@ public class Holo2UIManager : MonoBehaviour
     [SerializeField]
     TextMesh[] IPs = new TextMesh[4];
 
-
-    //UI上のパラメータを反映
-    public void UpdateUIParameter()
+    /// <summary>
+    /// 初期パラメータ、IPアドレスの設定
+    /// </summary>
+    public void InitUIParameter()
     {
         Holo2MeasurementParameter.IP = null;
         for (int i = 0; i < 4; i++)
@@ -40,6 +41,18 @@ public class Holo2UIManager : MonoBehaviour
                 Holo2MeasurementParameter.IP += ".";
         }
 
+        // ColorMapID = colormapID.SelectedIndices[0];
+        Holo2MeasurementParameter.ColorMapID = colorMapID.CurrentIndex;
+        Holo2MeasurementParameter.LevelMin = float.Parse(lvMin.text);
+        Holo2MeasurementParameter.LevelMax = float.Parse(lvMax.text);
+        Holo2MeasurementParameter.ObjSize = float.Parse(size.text);
+    }
+
+    /// <summary>
+    /// UI変更後のパラメータを更新
+    /// </summary>
+    public void UpdateUIParameter()
+    {
         // ColorMapID = colormapID.SelectedIndices[0];
         Holo2MeasurementParameter.ColorMapID = colorMapID.CurrentIndex;
         Holo2MeasurementParameter.LevelMin = float.Parse(lvMin.text);
