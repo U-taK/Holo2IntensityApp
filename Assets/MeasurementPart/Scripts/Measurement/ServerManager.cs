@@ -25,6 +25,7 @@ public class ServerManager : MonoBehaviour
     IntensityPackage sendIntensityData;
 
     Queue<SpatialMapSender> spatialMaps = new Queue<SpatialMapSender>();
+    Queue<SpatialMesh> spatialMeshs = new Queue<SpatialMesh>();
 
     Queue<SendPosition> positionPackages = new Queue<SendPosition>();
 
@@ -56,6 +57,11 @@ public class ServerManager : MonoBehaviour
         {
             var rPosition = positionPackages.Dequeue();
             StartCoroutine("SendIntensity", rPosition);
+        }
+        if (spatialMeshs.Count > 0)
+        {
+            var spatialMesh = spatialMeshs.Dequeue();
+            surfaceObserver.LoadEachMesh(spatialMesh);
         }
     }
 
@@ -151,6 +157,10 @@ public class ServerManager : MonoBehaviour
                     case SendType.SpatialMap:
                         transferData.DesirializeJson<SpatialMapSender>(out var spatialMapSender);
                         spatialMaps.Enqueue(spatialMapSender);
+                        break;
+                    case SendType.SpatialMesh:
+                        transferData.DesirializeJson<SpatialMesh>(out var spatialMesh);
+                        spatialMeshs.Enqueue(spatialMesh);
                         break;
                 }
             }

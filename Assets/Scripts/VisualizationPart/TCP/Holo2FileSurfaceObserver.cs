@@ -15,7 +15,7 @@ public class Holo2FileSurfaceObserver : MonoBehaviour
     [SerializeField]
     Material space_Material;
 
-
+    int mCounter = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -28,6 +28,30 @@ public class Holo2FileSurfaceObserver : MonoBehaviour
     {
         
     }
+
+    //SpatialMesh→空間マップ
+    public void LoadEachMesh(SpatialMesh data)
+    {
+        StartCoroutine("ReproMesh", data);
+    }
+
+    IEnumerator ReproMesh(SpatialMesh data)
+    {
+        var mesh = new Mesh();
+        mesh.vertices = data.vertices;
+        mesh.triangles = data.triangles;
+        // Reconstruct the normals from the vertices and triangles.
+        mesh.RecalculateNormals();
+        yield return null;
+
+        //生成したmeshをもとにgameオブジェクトに変換
+        Mesh2Object(mesh, mCounter++);        
+        
+        yield return null;
+    }
+
+
+
 
     //空間マップをjsonへシリアライズ可能なクラスSpatialMapSenderに変換
     public SpatialMapSender MapSend()
