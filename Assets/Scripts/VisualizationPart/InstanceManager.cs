@@ -6,7 +6,6 @@ namespace uOSC
 {
     public class InstanceManager : MonoBehaviour
     {
-
         //表示するプレファブ
         public GameObject cone;
         //空間基準マーカ
@@ -50,7 +49,10 @@ namespace uOSC
             VectorObj.transform.localRotation = Quaternion.LookRotation(10000000000 * package.intensity);
             VectorObj.transform.GetComponent<Renderer>().material.color = vecColor;
             VectorObj.name = "IntensityObject";
-            intensities.Add(package.num, VectorObj);
+            var panel = VectorObj.GetComponentInChildren<IntensityPanel>();
+            if (panel != null)
+                panel.UpdatePanel(this, package);
+            intensities.Add(package.num, msPoint);
             measureNo = package.num;
             return msPoint;
         }
@@ -72,7 +74,19 @@ namespace uOSC
         {
             if (intensities.ContainsKey(dNum))
             {
+                Destroy(intensities[dNum]);                
                 intensities.Remove(dNum);
+            }
+        }
+
+        //削除申請
+        public void DeleteAnnounceIntensity(int dNum)
+        {
+            var clientManager = this.GetComponent<Holo2ClientManager>();
+            if(clientManager != null)
+            {
+                DeleteVectorObj(dNum);
+                //clientManager.Delete(dNum);
             }
         }
     }

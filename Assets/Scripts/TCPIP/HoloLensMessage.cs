@@ -172,3 +172,22 @@ public class SpatialMesh : HoloLensMessage
 
     }
 }
+
+/// <summary>
+/// インテンシティ削除データを送信
+/// </summary>
+[Serializable]
+public class DeleteData : HoloLensMessage
+{
+    public int intensityID;
+    public DeleteData(string name, int ID) : base(name)
+    {
+        sendType = SendType.DeleteData;
+        intensityID = ID;
+    }
+
+    public DeleteData() : base()
+    {
+        sendType = SendType.DeleteData;
+    }
+}

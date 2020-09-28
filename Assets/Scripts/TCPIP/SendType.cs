@@ -9,5 +9,6 @@ public enum SendType
     Intensity,
     ReCalcData,
     SpatialMap,
-    SpatialMesh
+    SpatialMesh,
+    DeleteData
 }

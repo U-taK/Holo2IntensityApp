@@ -90,8 +90,6 @@ public class Holo2ClientManager : MonoBehaviour
     void Start()
     {
         instanceMaanger = GetComponent<InstanceManager>();
-
-        indicator = indicatorObject.GetComponent<IProgressIndicator>();
     }
 
     // Update is called once per frame
@@ -157,6 +155,7 @@ public class Holo2ClientManager : MonoBehaviour
     /// </summary>
     public async void SendSetting()
     {
+        indicator = indicatorObject.GetComponent<IProgressIndicator>();
         //UIパラメータを更新
         uIManager.UpdateUIParameter();
         //送信オブジェクトをパッケージ化
@@ -191,10 +190,6 @@ public class Holo2ClientManager : MonoBehaviour
             string jsonS = await Task.Run(() => transferData.SerializeJson<SpatialMesh>(data));
             tClient.StartSend(jsonS);
         }*/
-        //var data = await Task.Run(() => surfaceObserver.MapSend());
-        //var mTest = new MeshParts(meshTest);
-        //var data = new SpatialMapSender("",1);
-        //data.meshParts.Add(mTest);
         IMixedRealitySpatialAwarenessMeshObserver observer = await Task.Run(() => surfaceObserver.MapSendObserver());
 
         foreach (SpatialAwarenessMeshObject meshObject in observer.Meshes.Values)
@@ -244,7 +239,12 @@ public class Holo2ClientManager : MonoBehaviour
         }
     }
 
-
+    public void SendDeleteData(int dNum)
+    {
+        var deleteData = new DeleteData("delete", dNum);
+        string json = transferData.SerializeJson<DeleteData>(deleteData);
+        tClient.StartSend(json);
+    }
 
     /// <summary>
     /// データ受信イベント
