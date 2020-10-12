@@ -15,6 +15,7 @@ namespace uOSC
         //計測番号と計測結果の連想配列
         Dictionary<int, GameObject> intensities = new Dictionary<int, GameObject>();
 
+        List<IntensityPanel> panels = new List<IntensityPanel>();
         //オブジェクト生成
         public GameObject CreateInstantObj(int No, Vector3 micPos, Quaternion micRot, Vector3 intensity, Color vecColor, float objSize)
         {
@@ -51,8 +52,11 @@ namespace uOSC
             VectorObj.name = "IntensityObject";
             var panel = VectorObj.GetComponentInChildren<IntensityPanel>();
             if (panel != null)
+            {
                 panel.UpdatePanel(this, package);
-            intensities.Add(package.num, msPoint);
+                panels.Add(panel);
+            }
+            intensities.Add(package.num, VectorObj);
             measureNo = package.num;
             return msPoint;
         }
@@ -74,7 +78,7 @@ namespace uOSC
         {
             if (intensities.ContainsKey(dNum))
             {
-                Destroy(intensities[dNum]);                
+                Destroy(intensities[dNum].transform.parent.gameObject);                
                 intensities.Remove(dNum);
             }
         }
@@ -86,7 +90,17 @@ namespace uOSC
             if(clientManager != null)
             {
                 DeleteVectorObj(dNum);
-                //clientManager.Delete(dNum);
+                clientManager.SendDeleteData(dNum);
+            }
+        }
+
+        //Hand Menuアイコン
+        //IntensityPanelのプレートを一括非表示
+        public void InactiveIntensityPanel()
+        {
+            foreach(var panel in panels)
+            {
+                panel.gameObject.SetActive(false);
             }
         }
     }

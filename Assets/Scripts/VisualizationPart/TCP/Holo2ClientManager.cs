@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using uOSC;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit.SpatialAwareness;
+using Microsoft.MixedReality.Toolkit;
 
 [RequireComponent(typeof(Holo2FileSurfaceObserver))]
 [RequireComponent(typeof(InstanceManager))]
@@ -203,7 +204,18 @@ public class Holo2ClientManager : MonoBehaviour
             string jsonS = await Task.Run(() => transferData.SerializeJson<SpatialMesh>(data));
             tClient.StartSend(jsonS);
         }
-        
+
+        //空間メッシュのデータ更新を止める
+        // Cast the Spatial Awareness system to IMixedRealityDataProviderAccess to get an Observer
+        var access = CoreServices.SpatialAwarenessSystem as IMixedRealityDataProviderAccess;
+
+        // Get the first Mesh Observer available, generally we have only one registered
+        var observers = access.GetDataProvider<IMixedRealitySpatialAwarenessMeshObserver>();
+
+        // Suspends observation of spatial mesh data
+        observers.Suspend();
+
+
         await indicator.CloseAsync();
     }
 
@@ -302,4 +314,5 @@ public class Holo2ClientManager : MonoBehaviour
         Holo2MeasurementParameter.on_connected = true;
         c_status_changed = true;
     }
+
 }

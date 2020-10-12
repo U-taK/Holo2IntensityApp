@@ -33,7 +33,7 @@ public class IntensityPanel : MonoBehaviour
             transform.Translate(Vector3.up * interval, Space.World);
         }
         this.gameObject.transform.parent = null;
-        transform.localScale = Vector3.one * 0.4f;
+        transform.localScale = Vector3.one * 0.8f;
         this.gameObject.SetActive(false);
     }
     // Start is called before the first frame update

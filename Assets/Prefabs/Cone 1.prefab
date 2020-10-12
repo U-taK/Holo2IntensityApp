@@ -318,12 +318,12 @@ PrefabInstance:
     - target: {fileID: 4389804672504516224, guid: e030e853a62c6fc4f922698e915f8721,
         type: 3}
       propertyPath: m_LocalScale.x
-      value: 4
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 4389804672504516224, guid: e030e853a62c6fc4f922698e915f8721,
         type: 3}
       propertyPath: m_LocalScale.y
-      value: 4
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 4389804672504516224, guid: e030e853a62c6fc4f922698e915f8721,
         type: 3}
@@ -334,6 +334,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: IntensitySetting
+      objectReference: {fileID: 0}
+    - target: {fileID: 4389804672504516229, guid: e030e853a62c6fc4f922698e915f8721,
+        type: 3}
+      propertyPath: m_TagString
+      value: IntensityPanel
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e030e853a62c6fc4f922698e915f8721, type: 3}
