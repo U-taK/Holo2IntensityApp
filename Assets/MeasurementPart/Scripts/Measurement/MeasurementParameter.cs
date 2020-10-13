@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class MeasurementParameter : MonoBehaviour
 {
+    //TCP用のアドレス
+    public static string TCPAdress;
+
     //サンプリング周波数
     static int fs = 44100;
     public static int Fs

@@ -10,5 +10,6 @@ public enum SendType
     ReCalcData,
     SpatialMap,
     SpatialMesh,
-    DeleteData
+    DeleteData,
+    ReproData
 }

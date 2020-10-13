@@ -52,5 +52,32 @@ public class ReCalcDataPackage: ServerMessage
     {
         sendType = SendType.ReCalcData;
         this.storageNum = storageNum;
+        sendNums = new List<int>();
+        intensities = new List<Vector3>();
+    }
+
+    public ReCalcDataPackage(): base()
+    {
+        sendType = SendType.None;
+    }
+}
+
+[Serializable]
+public class ReproDataPackage: ReCalcDataPackage
+{
+    public List<Vector3> sendPoses;
+    public List<Quaternion> sendRots;
+    public ReproDataPackage(int storageNum) : base(storageNum)
+    {
+        sendType = SendType.ReproData;
+        sendNums = new List<int>();
+        sendPoses = new List<Vector3>();
+        sendRots = new List<Quaternion>();
+        intensities = new List<Vector3>();
+    }
+
+    public ReproDataPackage() : base()
+    {
+
     }
 }

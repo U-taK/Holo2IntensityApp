@@ -41,6 +41,7 @@ public class Holo2FileSurfaceObserver : MonoBehaviour
         mesh.vertices = data.vertices;
         mesh.triangles = data.triangles;
         // Reconstruct the normals from the vertices and triangles.
+        mesh.RecalculateBounds();
         mesh.RecalculateNormals();
         yield return null;
 
@@ -131,7 +132,9 @@ public class Holo2FileSurfaceObserver : MonoBehaviour
         var surface = new GameObject("Surface-" + m, componentsRequiredForSurfaceMesh);
         surface.transform.SetParent(origin.transform);
         var filter = surface.GetComponent<MeshFilter>();
+
         filter.sharedMesh = mesh;
+        filter.mesh = mesh;
 
         var renderer = surface.GetComponent<MeshRenderer>();
         renderer.sharedMaterial = space_Material;

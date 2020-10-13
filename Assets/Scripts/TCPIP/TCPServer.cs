@@ -41,7 +41,7 @@ namespace HoloLensModule.Network
         public delegate void DisconnectedEventHandler(object sender, EventArgs e, string s);
         public event DisconnectedEventHandler OnDisconnected;
         //接続OKイベント
-        public delegate void ConnectedEventHandler(EventArgs e);
+        public delegate void ConnectedEventHandler(EventArgs e, string log);
         public event ConnectedEventHandler OnConnected;
         //Thread signal
         private static ManualResetEvent allDone = new ManualResetEvent(false);
@@ -190,9 +190,9 @@ namespace HoloLensModule.Network
             lock (((ICollection)ClientSockets).SyncRoot)
                 ClientSockets.Add(handler);
             Debug.Log(handler.RemoteEndPoint + "と接続したよ");
-
+            string log = handler.RemoteEndPoint.ToString();
             //接続OKイベント発生
-            OnConnected(new EventArgs());
+            OnConnected(new EventArgs(),log);
 
             serverState.workSocket = handler;
             Debug.Log("受信するよ");
@@ -231,6 +231,7 @@ namespace HoloLensModule.Network
                 }
                 else
                 {
+
                     Debug.Log(handler.RemoteEndPoint + "が切断したよ");
                     //0bytes受信時は切断されたと判断
                     handler.Close();
@@ -239,7 +240,7 @@ namespace HoloLensModule.Network
                         this.ClientSockets.Remove(handler);
 
                     //接続断イベント
-                    string msg = "0バイトデータ受信";
+                    string msg = handler.RemoteEndPoint.ToString();
                     OnDisconnected(this, new EventArgs(), msg);
                 }
             }

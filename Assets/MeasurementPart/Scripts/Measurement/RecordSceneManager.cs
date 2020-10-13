@@ -12,6 +12,10 @@ public class RecordSceneManager : MonoBehaviour
     [SerializeField]
     Button rButton;
 
+    //計測時間[s]
+    [SerializeField]
+    Text mTime;
+
     int fs = 44100;
     int sampleLength = 4096;
 
@@ -49,7 +53,9 @@ public class RecordSceneManager : MonoBehaviour
         sampleLength = MeasurementParameter.SampleNum;
 
         //Asioスタート
-        string canStart = asiocsharpdll.PrepareAsio("MOTU Pro Audio", fs, sampleLength);
+        //string canStart = asiocsharpdll.PrepareAsio("MOTU Pro Audio", fs, sampleLength);
+        //string canStart = asiocsharpdll.PrepareAsio("ASIO4ALL v2", fs, sampleLength);
+        string canStart = asiocsharpdll.PrepareAsio(MeasurementParameter.AsioDriverName, MeasurementParameter.Fs, MeasurementParameter.SampleNum);
         Debug.Log(canStart);
         if (canStart == "Asio start")
         {
@@ -88,7 +94,16 @@ public class RecordSceneManager : MonoBehaviour
     /// </summary>
     public void Record2wav()
     {
+        //ディレクトリなかったら作成
+        SafeCreateDirectory(Application.streamingAssetsPath);
 
+        //録音＆マイク位置バイナリファイル保存
+        string fileName = @"CalibValues.wav";
+
+        if (mTime != null)
+            asiocsharpdll.StartAsioRecord(fileName, int.Parse(mTime.text));
+        else
+            asiocsharpdll.StartAsioRecord(fileName, 3);
     }
 
     private void OnDestroy()

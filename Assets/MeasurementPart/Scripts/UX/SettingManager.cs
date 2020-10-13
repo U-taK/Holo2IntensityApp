@@ -32,6 +32,14 @@ public class SettingManager : MonoBehaviour
     [SerializeField]
     InputField inSaveDir;
 
+    //再重畳用パラメータ
+    [SerializeField]
+    InputField plotNum;
+    [SerializeField]
+    InputField oSize;
+    [SerializeField]
+    InputField micInterval;
+
     LogPanelManager logPanelManager;
 
     private void OnEnable()
@@ -45,7 +53,8 @@ public class SettingManager : MonoBehaviour
             InitParam();
     }
     /// <summary>
-    /// MeasurementParameterに入力データをセット
+    /// MeasurementParameterに入力データ(計測条件)をセット
+    /// 計測シーンのMeasurementStartにて呼び出される
     /// </summary>
     public void InitParam()
     {
@@ -57,12 +66,48 @@ public class SettingManager : MonoBehaviour
         //気体密度
         MeasurementParameter.Temp = int.Parse(inTemp.text);
         MeasurementParameter.Atm = float.Parse(inAtm.text);
-        CalculateAtmDensity(MeasurementParameter.Temp, MeasurementParameter.Atm);
+        CalculateAtmDensity(MeasurementParameter.Atm, MeasurementParameter.Temp);
         logPanelManager.Writelog("Temp:" + MeasurementParameter.Temp + ",Atom:" + MeasurementParameter.Atm);
         logPanelManager.Writelog("atmDensity:" + MeasurementParameter.AtmDensity);
 
         //オブジェクト間間隔
         MeasurementParameter.ObjInterval = float.Parse(inOInterval.text);
+        //インテンシティのレベルレンジ
+        MeasurementParameter.MinIntensity = float.Parse(in_minIntensity.text);
+        MeasurementParameter.MaxIntensity = float.Parse(in_maxIntensity.text);
+
+        //保存先のパス
+        MeasurementParameter.SaveDir = inSaveDir.text;
+        logPanelManager.Writelog("interval:" + MeasurementParameter.ObjInterval);
+        logPanelManager.Writelog("Intensity range is" + MeasurementParameter.MinIntensity + "~" + MeasurementParameter.MaxIntensity);
+        logPanelManager.Writelog("save directory is" + MeasurementParameter.SaveDir);
+    }
+
+    /// <summary>
+    /// 再重畳シーンにて呼び出し
+    /// 計測条件を再設定
+    /// </summary>
+    public void InitParam4Repro()
+    {
+        //プロット数
+        MeasurementParameter.plotNumber = int.Parse(plotNum.text);
+        //オブジェクトサイズ
+        MeasurementParameter.objSize = float.Parse(oSize.text);
+        //マイクロホン間隔
+        MeasurementParameter.MInterval = float.Parse(micInterval.text);
+
+        //周波数バンド
+        CalcFreq();
+        logPanelManager.Writelog("MinFreq:" + MeasurementParameter.FreqMin);
+        logPanelManager.Writelog("MaxFreq:" + MeasurementParameter.FreqMax);
+
+        //気体密度
+        MeasurementParameter.Temp = int.Parse(inTemp.text);
+        MeasurementParameter.Atm = float.Parse(inAtm.text);
+        CalculateAtmDensity(MeasurementParameter.Atm, MeasurementParameter.Temp);
+        logPanelManager.Writelog("Temp:" + MeasurementParameter.Temp + ",Atom:" + MeasurementParameter.Atm);
+        logPanelManager.Writelog("atmDensity:" + MeasurementParameter.AtmDensity);
+       
         //インテンシティのレベルレンジ
         MeasurementParameter.MinIntensity = float.Parse(in_minIntensity.text);
         MeasurementParameter.MaxIntensity = float.Parse(in_maxIntensity.text);

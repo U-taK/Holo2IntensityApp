@@ -16,7 +16,7 @@ public class IntensityManager : MonoBehaviour
     GameObject copyStandard;
 
     //インテンシティオブジェクトを作成しておく
-    List<DataStorage> dataStorages = new List<DataStorage>();
+    Dictionary<int, DataStorage> dataStorages = new Dictionary<int, DataStorage>();
 
     //生成オブジェクトの管理
     Dictionary<int, GameObject> intensities = new Dictionary<int, GameObject>();
@@ -79,12 +79,12 @@ public class IntensityManager : MonoBehaviour
 
             //データそのものを保管
             DataStorage data = new DataStorage(Num, sendPosition.sendPos, sendPosition.sendRot, soundSignals, intensityDir);
-            dataStorages.Add(data);
+            dataStorages. Add(Num,data);
 
             //送信データを作成
-
+            var sendData = new IntensityPackage(sendPosition, intensityDir, Num);
             Num++;
-            return new IntensityPackage(sendPosition, intensityDir, Num);
+            return sendData;
         }
         else
         {
@@ -122,7 +122,7 @@ public class IntensityManager : MonoBehaviour
             //データそのものを保管
             double[][] soundSignals = new double[4][];
             DataStorage data = new DataStorage(Num, sendPosition.sendPos, sendPosition.sendRot, soundSignals, intensityDir);
-            dataStorages.Add(data);
+            dataStorages.Add(Num,data);
 
             //送信データを作成
 
@@ -142,9 +142,9 @@ public class IntensityManager : MonoBehaviour
         }
         else
         {
-            for (int index = 0; index < plotNum; index++)
+            foreach(var dataStorage in dataStorages.Values)
             {
-                if (!dataStorages[index].CheckPlotDistance(realtimeLocalPosition, MeasurementParameter.ObjInterval)) 
+                if (!dataStorage.CheckPlotDistance(realtimeLocalPosition, MeasurementParameter.ObjInterval))
                     return false;
             }
             return true;
@@ -165,7 +165,7 @@ public class IntensityManager : MonoBehaviour
     {
         //送信データの作成
         ReCalcDataPackage data = new ReCalcDataPackage(dataStorages.Count);
-        foreach(DataStorage dataStorage in dataStorages)
+        foreach(DataStorage dataStorage in dataStorages.Values)
         {
             Vector3 intensity = AcousticMathNew.CrossSpectrumMethod(dataStorage.soundSignal, MeasurementParameter.Fs, length_bit,
                 MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval);
@@ -210,33 +210,37 @@ public class IntensityManager : MonoBehaviour
         Debug.Log(MeasurementParameter.SaveDir);
         //ディレクトリなかったら作成
         SafeCreateDirectory(MeasurementParameter.SaveDir);
-
+        int index = 0;
         //録音＆マイク位置バイナリファイル保存
-        for (int dataIndex = 0; dataIndex < dataStorages.Count; dataIndex++)
+        foreach (var dataStorage in dataStorages.Values)
         {
-            string Filteredname = MeasurementParameter.SaveDir + @"\measurepoint_" + (dataIndex + 1).ToString() + ".bytes";
-            FileStream fs = new FileStream(Filteredname, FileMode.Create);
-            BinaryWriter bw = new BinaryWriter(fs);
-
-            for (int micID = 0; micID < 4; micID++)
+            int dataIndex = index++;
+            string pathName = MeasurementParameter.SaveDir + @"\measurepoint_" + dataIndex.ToString() + ".bytes";
+            await Task.Run(() =>
             {
-                for (int sample = 0; sample < dataStorages[dataIndex].soundSignal[micID].Length; sample++)
+                FileStream fs = new FileStream(pathName, FileMode.Create);
+                BinaryWriter bw = new BinaryWriter(fs);
+
+                for (int micID = 0; micID < 4; micID++)
                 {
-                    bw.Write(dataStorages[dataIndex].soundSignal[micID][sample]);
+                    for (int sample = 0; sample < dataStorage.soundSignal[micID].Length; sample++)
+                    {
+                        bw.Write(dataStorage.soundSignal[micID][sample]);
+                    }
                 }
-            }
 
-            bw.Write((double)dataStorages[dataIndex].micLocalPos.x);
-            bw.Write((double)dataStorages[dataIndex].micLocalPos.y);
-            bw.Write((double)dataStorages[dataIndex].micLocalPos.z);
+                bw.Write((double)dataStorage.micLocalPos.x);
+                bw.Write((double)dataStorage.micLocalPos.y);
+                bw.Write((double)dataStorage.micLocalPos.z);
 
-            bw.Write((double)dataStorages[dataIndex].micLocalRot.x);
-            bw.Write((double)dataStorages[dataIndex].micLocalRot.y);
-            bw.Write((double)dataStorages[dataIndex].micLocalRot.z);
-            bw.Write((double)dataStorages[dataIndex].micLocalRot.w);
+                bw.Write((double)dataStorage.micLocalRot.x);
+                bw.Write((double)dataStorage.micLocalRot.y);
+                bw.Write((double)dataStorage.micLocalRot.z);
+                bw.Write((double)dataStorage.micLocalRot.w);
 
-            bw.Close();
-            fs.Close();            
+                bw.Close();
+                fs.Close();
+            });
         }
         MeasurementParameter.plotNumber = dataStorages.Count;
         await Task.Run(() => SettingSave());
@@ -275,5 +279,16 @@ public class IntensityManager : MonoBehaviour
         settingSW.WriteLine("The number of plot :" + MeasurementParameter.plotNumber);
         settingSW.Close();
         return;
+    }
+
+    public void DeleteIntensity(DeleteData dData)
+    {
+        var dNum = dData.intensityID;
+        if (intensities.ContainsKey(dNum))
+        {
+            Destroy(intensities[dNum].transform.parent.gameObject);
+            intensities.Remove(dNum);
+            dataStorages.Remove(dNum);
+        }
     }
 }

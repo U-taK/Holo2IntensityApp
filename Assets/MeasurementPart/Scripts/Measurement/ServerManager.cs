@@ -24,10 +24,15 @@ public class ServerManager : MonoBehaviour
     //送信するインテンシティデータ
     IntensityPackage sendIntensityData;
 
-    Queue<SpatialMapSender> spatialMaps = new Queue<SpatialMapSender>();
+    //受信データのストック先
+    //Queue<SpatialMapSender> spatialMaps = new Queue<SpatialMapSender>();
     Queue<SpatialMesh> spatialMeshs = new Queue<SpatialMesh>();
 
     Queue<SendPosition> positionPackages = new Queue<SendPosition>();
+
+    Queue<DeleteData> deleteDatas = new Queue<DeleteData>();
+
+    Queue<string> logQueue = new Queue<string>();
 
     // Start is called before the first frame update
     void Start()
@@ -45,14 +50,12 @@ public class ServerManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha7))
-            StartTCPServer();
-
-        if (spatialMaps.Count > 0)
+        //旧型spatialmap送信システム
+        /*if (spatialMaps.Count > 0)
         {
             var mapData = spatialMaps.Dequeue();
             surfaceObserver.LoadMesh(mapData);
-        }
+        }*/
         if (positionPackages.Count > 0)
         {
             var rPosition = positionPackages.Dequeue();
@@ -62,6 +65,20 @@ public class ServerManager : MonoBehaviour
         {
             var spatialMesh = spatialMeshs.Dequeue();
             surfaceObserver.LoadEachMesh(spatialMesh);
+        }
+        if (deleteDatas.Count > 0)
+        {
+            var deleteData = deleteDatas.Dequeue();
+            intensityManager.DeleteIntensity(deleteData);
+            //シェアリング相手にもデータ消去申請
+            string json = transferData.SerializeJson<DeleteData>(deleteData);
+            tServer.SendAllClient(json);
+            logPanelManager.Writelog("Intensitiy ID " + deleteData.intensityID + " is deleted.");
+        }
+        if(logQueue.Count > 0)
+        {
+            var log = logQueue.Dequeue();
+            logPanelManager.Writelog(log);
         }
     }
 
@@ -81,8 +98,8 @@ public class ServerManager : MonoBehaviour
     /**tcp始めるボタンに紐づけ**/
     public void StartTCPServer()
     {
-        //ローカルサーバーを使うことを推定
-        var host = "192.168.0.46";
+        //ローカルサーバーを使うことを推定        
+        var host = MeasurementParameter.TCPAdress!=null? MeasurementParameter.TCPAdress:"192.168.0.42";
         tServer = new TCPServer(host,port);
         //データ受信イベント
         tServer.OnReceiveData += new TCPServer.ReceiveEventHandler(tServer_OnReceiveData);
@@ -103,15 +120,17 @@ public class ServerManager : MonoBehaviour
     void tServer_OnDisconnected(object sender, EventArgs e,string s)
     {
         Debug.Log("Server接続解除");
+        logQueue.Enqueue(s+" Client is disconnected");
     }
 
     /// <summary>
     /// 接続OKイベント
     /// </summary>
     /// <param name="e"></param>
-    void tServer_OnConnected(EventArgs e)
+    void tServer_OnConnected(EventArgs e, string log)
     {
         Debug.Log("Clientと接続完了");
+        logQueue.Enqueue(log + " is connected.");
     } 
 
     /// <summary>
@@ -153,14 +172,14 @@ public class ServerManager : MonoBehaviour
                         transferData.DesirializeJson<SettingSender>(out var holoSetting);
                         MeasurementParameter.HoloLensParameterUpdate(holoSetting);
                         Debug.Log("[Server] Holo setting ColorMapID: " + holoSetting.colorMapID);
-                        break;
-                    case SendType.SpatialMap:
-                        transferData.DesirializeJson<SpatialMapSender>(out var spatialMapSender);
-                        spatialMaps.Enqueue(spatialMapSender);
-                        break;
+                        break;                    
                     case SendType.SpatialMesh:
                         transferData.DesirializeJson<SpatialMesh>(out var spatialMesh);
                         spatialMeshs.Enqueue(spatialMesh);
+                        break;
+                    case SendType.DeleteData:
+                        transferData.DesirializeJson<DeleteData>(out var deleteData);
+                        deleteDatas.Enqueue(deleteData);
                         break;
                 }
             }

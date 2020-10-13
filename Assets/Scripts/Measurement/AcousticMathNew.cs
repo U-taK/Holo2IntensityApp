@@ -198,13 +198,12 @@ class AcousticMathNew
     }
 
     /// <summary>
-    /// Original filter function
+    /// Original filter function(2次のバンドパスフィルタ)
+    /// 周波数を変更する場合はc_freqを変更
     /// </summary>
-    /// <param name="cloop">current loop number</param>
-    /// <param name="inSamplesL"></param>
-    /// <param name="inSamplesR"></param>
-    /// <param name="outSamplesL"></param>
-    /// <param name="outSamplesR"></param>
+    /// <param name="input">入力信号</param>
+    /// <param name="signals">出力信号</param>
+    /// <param name="sampleLength">出力信号長</param>
     public static void BPFilter(double[] input, out double[] signals, int sampleLength)
     {
         int c_freq = 1000;
@@ -231,10 +230,7 @@ class AcousticMathNew
 
             signals[m] = b0 * input[m] + b1 * input[m - 1] + b2 * input[m - 2] -
             a1 * signals[m - 1] - a2 * signals[m - 2];
-
         }
-
-
     }
 
 

@@ -19,8 +19,12 @@ public class GetIP : MonoBehaviour
     {
         text = GetComponent<Text>();
         if (text != null)
-            text .text = "Server IP Address is\n" + GetMyIPAddress();
-
+        {
+            var adress = GetMyIPAddress();
+            text.text = "Server IP Address is\n" + adress;
+            MeasurementParameter.TCPAdress = adress;
+            Debug.Log(MeasurementParameter.TCPAdress);
+        }
         
     }
 
