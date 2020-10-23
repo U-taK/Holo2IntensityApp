@@ -83,7 +83,8 @@ namespace uOSC
         {
             if (intensities.ContainsKey(dNum))
             {
-                Destroy(intensities[dNum].transform.parent.gameObject);                
+                Destroy(intensities[dNum].transform.parent.gameObject);
+                panels.RemoveAt(dNum);
                 intensities.Remove(dNum);
             }
         }
@@ -105,7 +106,8 @@ namespace uOSC
         {
             foreach(var panel in panels)
             {
-                panel.gameObject.SetActive(false);
+                if(panel.gameObject != null)
+                    panel.gameObject.SetActive(false);
             }
         }
     }
