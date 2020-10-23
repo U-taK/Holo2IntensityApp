@@ -21,6 +21,7 @@ public class Holo2ClientManager : MonoBehaviour
     Holo2FileSurfaceObserver surfaceObserver;
     InstanceManager instanceMaanger;
     Holo2UIManager uIManager;
+    Holo2ReproUIManager uiManagerRepro;
 
     bool gotData;
 
@@ -39,9 +40,14 @@ public class Holo2ClientManager : MonoBehaviour
 
     Queue<IntensityPackage> intensityPackages = new Queue<IntensityPackage>();
     Queue<ReCalcDataPackage> recalcDataPackages = new Queue<ReCalcDataPackage>();
+    Queue<ReproDataPackage> reproDatas = new Queue<ReproDataPackage>();
 
     [SerializeField]
     private GameObject indicatorObject;
+
+    [SerializeField]
+    private TextMesh sharing_status;
+
     private IProgressIndicator indicator;
 
     List<int> measureID = new List<int>();
@@ -52,6 +58,38 @@ public class Holo2ClientManager : MonoBehaviour
 
     [SerializeField]
     GameObject testMap;
+
+    /// <summary>
+    /// 準備ができたら
+    /// </summary>
+    public void StartTCPClient4Reproduction()
+    {
+        uiManagerRepro = gameObject.GetComponent<Holo2ReproUIManager>();
+        uiManagerRepro.InitUIParameter();
+        string host = Holo2MeasurementParameter.IP;        
+        try
+        {
+            tClient = new TCPClient(host, port);
+            //データ受信イベント
+#if WINDOWS_UWP
+            tClient.ListenerMessageEvent +=   new TCPClient.ListenerMessageEventHandler(tClient_OnReceiveData);
+#else
+            tClient.OnReceiveData += new TCPClient.ReceiveEventHandler(tClient_OnReceiveData);
+#endif
+            tClient.OnConnected += tClient_OnConnected;
+            tClient.OnDisconnected += tClient_OnDisconnected;
+#if WINDOWS_UWP
+#else
+            //受信開始
+            tClient.StartReceive();
+#endif
+            Debug.Log("Client OK");
+        }
+        catch (Exception ex)
+        {
+            Debug.Log(ex.Message);
+        }
+    }
 
     /// <summary>
     /// 準備ができたら
@@ -106,13 +144,23 @@ public class Holo2ClientManager : MonoBehaviour
             if(recalcDataPackages.Count > 0)
             {
                 var package = recalcDataPackages.Dequeue();
-                StartCoroutine("ReproIntensityMap", package);
+                StartCoroutine("ReCalcIntensityMap", package);
             }
+            
+        }
+        if (reproDatas.Count > 0)
+        {
+            var reprodata = reproDatas.Dequeue();
+            StartCoroutine("ReProIntensityMap", reprodata);
+
         }
 
         //接続状態をUIの上部ランプで判断できるようにしている
         if (c_status_changed)
         {
+            //sharingの状態を伝える
+            if(sharing_status != null)
+                sharing_status.text = "Connected Server";
 
             if (c_counter % 2 == 0)
                 c_status.GetComponent<MeshRenderer>().material.color = Color.green;
@@ -137,7 +185,7 @@ public class Holo2ClientManager : MonoBehaviour
         yield return null;
     }
 
-    IEnumerator ReproIntensityMap(ReCalcDataPackage recalcData)
+    IEnumerator ReCalcIntensityMap(ReCalcDataPackage recalcData)
     {
         for(int n = 0;n < recalcData.storageNum; n++)
         {
@@ -145,6 +193,21 @@ public class Holo2ClientManager : MonoBehaviour
                 float intensityLv = AIMath.CalcuIntensityLevel(recalcData.intensities[n]);
                 Color ObjColor = ColorBar.DefineColor(Holo2MeasurementParameter.ColorMapID, intensityLv, Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax);
             instanceMaanger.ChangeIntensityObj(recalcData.sendNums[n], recalcData.intensities[n], ObjColor);
+
+            yield return null;
+        }
+    }
+
+    IEnumerator ReProIntensityMap(ReproDataPackage reproData)
+    {
+        for (int n = 0; n < reproData.storageNum; n++)
+        {
+            var intensityLv = AcousticMathNew.CalcuIntensityLevel(reproData.intensities[n]);
+            //コーンの色を生成
+            Color vecObjColor = ColorBar.DefineColor(Holo2MeasurementParameter.ColorMapID, intensityLv,
+                Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax);
+            //オブジェクトを生成
+            instanceMaanger.CreateInstantObj(reproData.sendNums[n], reproData.sendPoses[n], reproData.sendRots[n], reproData.intensities[n], vecObjColor, Holo2MeasurementParameter.ObjSize);
 
             yield return null;
         }
@@ -295,6 +358,14 @@ public class Holo2ClientManager : MonoBehaviour
                     case SendType.ReCalcData:
                         transferData.DesirializeJson<ReCalcDataPackage>(out var recalcDataPackage);
                         recalcDataPackages.Enqueue(recalcDataPackage);
+                        break;
+                    case SendType.ReproData:
+                        transferData.DesirializeJson<ReproDataPackage>(out var reproDataPackage);
+                        //シェアリング側のみ実行
+                        if (!Holo2MeasurementParameter._measure)
+                        {
+                            reproDatas.Enqueue(reproDataPackage);
+                        }
                         break;
                 }
             }

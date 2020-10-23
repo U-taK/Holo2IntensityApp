@@ -68,7 +68,7 @@ public class UIPanelManager : MonoBehaviour
         readyPanel.SetActive(true);
     }
 
-    //観測側の観測スタート
+    //計測スタート
     public void StartMeasure()
     {
         this.gameObject.SetActive(false);
@@ -79,10 +79,13 @@ public class UIPanelManager : MonoBehaviour
             //TCPの場合
             Holo2MeasurementParameter._measure = true;
         }
+        else if(type == measureType.shared)
+        {
+            Holo2MeasurementParameter._measure = false;
+        }
         //UDPの場合
         UIManager._instance = true;
         //TCPの場合
         Holo2MeasurementParameter._instance = true;
     }
-
 }

@@ -31,6 +31,11 @@ namespace uOSC
             VectorObj.transform.localRotation = Quaternion.LookRotation(10000000000 * intensity);
             VectorObj.transform.GetComponent<Renderer>().material.color = vecColor;
             VectorObj.name = "IntensityObject";
+            var panel = VectorObj.GetComponentInChildren<IntensityPanel>();
+            if (panel != null)
+            {
+                Destroy(panel.gameObject);
+            }
             intensities.Add(No, VectorObj);
             measureNo = No;
             return msPoint;
