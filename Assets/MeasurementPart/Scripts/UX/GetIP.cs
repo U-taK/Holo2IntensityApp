@@ -13,15 +13,16 @@ using System.Net.NetworkInformation;
 
 public class GetIP : MonoBehaviour
 {
-    Text text;
+    InputField inputField;
     // Start is called before the first frame update
     void Start()
     {
-        text = GetComponent<Text>();
-        if (text != null)
+        inputField = GetComponent<InputField>();
+        
+        if (inputField != null)
         {
             var adress = GetMyIPAddress();
-            text.text = "Server IP Address is\n" + adress;
+            inputField.text = adress;
             MeasurementParameter.TCPAdress = adress;
             Debug.Log(MeasurementParameter.TCPAdress);
         }
@@ -57,5 +58,11 @@ public class GetIP : MonoBehaviour
             }
         }
         return "0:0:0:0";
+    }
+
+    //IPアドレスがとれなかった場合、直入力を推奨
+    public void OnIPChange()
+    {
+        MeasurementParameter.TCPAdress = inputField.text;
     }
 }
