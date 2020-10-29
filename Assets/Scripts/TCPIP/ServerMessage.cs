@@ -43,6 +43,38 @@ public class IntensityPackage:ServerMessage
 }
 
 [Serializable]
+public class TransIntensityPackage: ServerMessage
+{
+    public Vector3 sendPos;
+    public Quaternion sendRot;
+    public Vector3 sumIntensity;
+    public Vector3[] IIntensities;
+    public int num;
+    public TransIntensityPackage(Vector3 sendPos, Quaternion sendRot, Vector3 intensity, Vector3[] iintensities, int j) : base()
+    {
+        sendType = SendType.IIntensities;
+        this.sendPos = sendPos;
+        this.sendRot = sendRot;
+        this.sumIntensity = intensity;
+        this.IIntensities = iintensities;
+        this.num = j;
+    }
+    public TransIntensityPackage(SendPosition sendPosition, Vector3 intensity, Vector3[] iintensities, int j) : base()
+    {
+        sendType = SendType.IIntensities;
+        this.sendPos = sendPosition.sendPos;
+        this.sendRot = sendPosition.sendRot;
+        this.sumIntensity = intensity;
+        this.IIntensities = iintensities;
+        this.num = j;
+    }
+    public TransIntensityPackage() : base()
+    {
+        sendType = SendType.None;
+    }
+}
+
+[Serializable]
 public class ReCalcDataPackage: ServerMessage
 {
     public int storageNum;
