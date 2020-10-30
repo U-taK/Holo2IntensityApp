@@ -184,6 +184,8 @@ public class TransientServerManager : MonoBehaviour
     {
         Debug.Log("Clientと接続完了");
         logQueue.Enqueue(log + " is connected.");
+        How2Measure measureType = new How2Measure(MeasurementType.Transient);
+        tServer.SendAllClient(transferData.SerializeJson<How2Measure>(measureType));
     }
 
     /// <summary>

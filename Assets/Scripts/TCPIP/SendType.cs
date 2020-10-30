@@ -4,6 +4,7 @@
 public enum SendType
 {
     None,
+    MeasurementType,
     PositionSender,
     SettingSender,
     Intensity,
@@ -13,4 +14,13 @@ public enum SendType
     SpatialMesh,
     DeleteData,
     ReproData
+}
+
+/// <summary>
+/// Server側は接続時に計測方法(時間平均standard or 過渡音計測Transient)をClientに通達する
+/// </summary>
+public enum MeasurementType
+{
+    Standard,
+    Transient
 }

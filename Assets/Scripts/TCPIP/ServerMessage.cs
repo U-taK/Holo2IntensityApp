@@ -113,3 +113,20 @@ public class ReproDataPackage: ReCalcDataPackage
 
     }
 }
+
+[Serializable]
+public class How2Measure: ServerMessage
+{
+    public MeasurementType measureType;
+
+    public How2Measure(MeasurementType type): base()
+    {
+        sendType = SendType.MeasurementType;
+        measureType = type;
+    }
+
+    public How2Measure(): base()
+    {
+        sendType = SendType.None;
+    }
+}
