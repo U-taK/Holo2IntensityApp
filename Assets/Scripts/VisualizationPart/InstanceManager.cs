@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Security;
 using UnityEngine;
 
 namespace uOSC
@@ -16,6 +17,8 @@ namespace uOSC
         Dictionary<int, GameObject> intensities = new Dictionary<int, GameObject>();
 
         List<IntensityPanel> panels = new List<IntensityPanel>();
+        List<Color> colors = new List<Color>();
+        List<Vector3> scales = new List<Vector3>();
         //オブジェクト生成
         public GameObject CreateInstantObj(int No, Vector3 micPos, Quaternion micRot, Vector3 intensity, Color vecColor, float objSize)
         {
@@ -35,6 +38,7 @@ namespace uOSC
             if (panel != null)
             {
                 Destroy(panel.gameObject);
+                panels.Add(panel);
             }
             intensities.Add(No, VectorObj);
             measureNo = No;
@@ -66,7 +70,33 @@ namespace uOSC
             return msPoint;
         }
 
-        //色変更
+        public GameObject CreateInstantIIntensityObj(TransIntensityPackage package, Color vecColor, float objSize)
+        {
+            //時間平均したインテンシティのobjectを一時的に表示
+            var msPoint = CreateInstantObj(package.num, package.sendPos, package.sendRot, package.sumIntensity, vecColor, objSize);
+            var storage = msPoint.AddComponent<IntensityObject>();
+            storage.child = msPoint.transform.GetChild(0).gameObject;
+            //瞬時音響インテンシティをリストに保持させる
+            colors.Clear();
+            scales.Clear();
+
+            foreach (var iintensiy in package.IIntensities)
+            {
+                var intensityLv = AIMath.CalcuIntensityLevel(iintensiy);
+                colors.Add(ColorBar.DefineColor(Holo2MeasurementParameter.ColorMapID, intensityLv, Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax));
+                scales.Add(DefineSize(intensityLv, Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax));
+            }
+            storage.PushInstantIntensity(package.IIntensities, colors, scales);
+
+            return msPoint;
+        }
+
+        /// <summary>
+        /// 色変更
+        /// </summary>
+        /// <param name="No"></param>
+        /// <param name="newIntensity"></param>
+        /// <param name="color"></param>
         public void ChangeIntensityObj(int No, Vector3 newIntensity, Color color)
         {
             if (intensities.ContainsKey(No))
@@ -93,7 +123,7 @@ namespace uOSC
         public void DeleteAnnounceIntensity(int dNum)
         {
             var clientManager = this.GetComponent<Holo2ClientManager>();
-            if(clientManager != null)
+            if (clientManager != null)
             {
                 DeleteVectorObj(dNum);
                 clientManager.SendDeleteData(dNum);
@@ -104,10 +134,34 @@ namespace uOSC
         //IntensityPanelのプレートを一括非表示
         public void InactiveIntensityPanel()
         {
-            foreach(var panel in panels)
+            foreach (var panel in panels)
             {
-                if(panel.gameObject != null)
+                if (panel.gameObject != null)
                     panel.gameObject.SetActive(false);
+            }
+        }
+
+        /// <summary>
+        /// 大きさをインテンシティレベルのレンジに即して更新(瞬時音響インテンシティ時に使用)
+        /// </summary>
+        /// <param name="level"></param>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
+        /// <returns></returns>
+        private Vector3 DefineSize(float level, float min, float max)
+        {
+            float colorScale = (level - min) / (max - min);
+            if (colorScale > 1)
+            {
+                return new Vector3(1f, 1f, 4f);
+            }
+            else if (colorScale >= 0 && colorScale <= 1)
+            {
+                return new Vector3(colorScale, colorScale, colorScale * 4f);
+            }
+            else
+            {
+                return Vector3.zero;
             }
         }
     }

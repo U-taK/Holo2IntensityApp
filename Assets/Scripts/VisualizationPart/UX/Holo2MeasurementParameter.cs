@@ -49,4 +49,6 @@ public class Holo2MeasurementParameter : MonoBehaviour
     //ServerのIPアドレス
     public static string IP;
 
+    //時間平均か過渡音計測を決めるステータス
+    public static MeasurementType measurementType = MeasurementType.Standard;
 }

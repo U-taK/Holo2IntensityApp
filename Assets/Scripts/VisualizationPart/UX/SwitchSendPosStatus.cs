@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using Microsoft.MixedReality.Toolkit.UI;
 
 public class SwitchSendPosStatus : MonoBehaviour
 {
@@ -14,6 +15,8 @@ public class SwitchSendPosStatus : MonoBehaviour
     Material suspend;
     [SerializeField]
     Material start;
+    [SerializeField]
+    Interactable interactable_trigger;
 
     //Hand Menu アイコン
     //データ送信を一時停止＆再開
@@ -24,11 +27,15 @@ public class SwitchSendPosStatus : MonoBehaviour
         {
             text.text = "SendSuspend";
             mrenderer.material = suspend;
+            if (Holo2MeasurementParameter.measurementType == MeasurementType.Transient)
+                interactable_trigger.IsEnabled = true;
         }
         else
         {
             text.text = "SendStart";
             mrenderer.material = start;
+            if (Holo2MeasurementParameter.measurementType == MeasurementType.Transient)
+                interactable_trigger.IsEnabled = false;
         }
     }
 

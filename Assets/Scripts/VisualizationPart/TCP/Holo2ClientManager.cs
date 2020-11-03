@@ -8,6 +8,7 @@ using uOSC;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit.SpatialAwareness;
 using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.Toolkit.Input;
 
 [RequireComponent(typeof(Holo2FileSurfaceObserver))]
 [RequireComponent(typeof(InstanceManager))]
@@ -22,6 +23,8 @@ public class Holo2ClientManager : MonoBehaviour
     InstanceManager instanceMaanger;
     Holo2UIManager uIManager;
     Holo2ReproUIManager uiManagerRepro;
+    //過渡音計測のトリガー
+    Interactable interactable_trigger;
 
     bool gotData;
 
@@ -41,6 +44,7 @@ public class Holo2ClientManager : MonoBehaviour
     Queue<IntensityPackage> intensityPackages = new Queue<IntensityPackage>();
     Queue<ReCalcDataPackage> recalcDataPackages = new Queue<ReCalcDataPackage>();
     Queue<ReproDataPackage> reproDatas = new Queue<ReproDataPackage>();
+    Queue<TransIntensityPackage> iIntensitiesPackages = new Queue<TransIntensityPackage>();
 
     [SerializeField]
     private GameObject indicatorObject;
@@ -55,6 +59,9 @@ public class Holo2ClientManager : MonoBehaviour
     //接続状態が変化したら変更
     bool c_status_changed = false;
     int c_counter = 0;
+
+    //座標送信数
+    int counter = 0;
 
     [SerializeField]
     GameObject testMap;
@@ -170,8 +177,18 @@ public class Holo2ClientManager : MonoBehaviour
             c_status_changed = false;
             c_counter++;
         }
+        if(iIntensitiesPackages.Count > 0)
+        {
+            var package = iIntensitiesPackages.Dequeue();
+            StartCoroutine("InstantIntensityObject", package);
+        }
     }
 
+    /// <summary>
+    /// 時間平均音響インテンシティオブジェクトの作成
+    /// </summary>
+    /// <param name="package">Serverから送信されたインテンシティ、座標を含むオブジェクト</param>
+    /// <returns></returns>
     IEnumerator InstantObject(IntensityPackage package)
     {
         var intensityLv = AcousticMathNew.CalcuIntensityLevel(package.intensity);
@@ -180,6 +197,24 @@ public class Holo2ClientManager : MonoBehaviour
             Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax);
         //オブジェクトを生成
         instanceMaanger.CreateInstantObj(package, vecObjColor, Holo2MeasurementParameter.ObjSize);
+        measureID.Add(package.num);
+        Debug.Log(DateTime.Now.ToString("MM/dd/HH:mm:ss.fff") + "Display measurement point No." + package.num);
+        yield return null;
+    }
+
+    /// <summary>
+    /// 瞬時音響インテンシティオブジェクトの作成(表示は一時的に時間平均のものとする)
+    /// </summary>
+    /// <param name="package">Serverから送信されたインテンシティ、座標、瞬時音響インテンシティを含むオブジェクト</param>
+    /// <returns></returns>
+    IEnumerator InstantInstensityObject(TransIntensityPackage package)
+    {
+        var intensityLv = AcousticMathNew.CalcuIntensityLevel(package.sumIntensity);
+        //コーンの色を生成
+        Color vecObjColor = ColorBar.DefineColor(Holo2MeasurementParameter.ColorMapID, intensityLv,
+            Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax);
+        //オブジェクトを生成
+        instanceMaanger.CreateInstantIIntensityObj(package, vecObjColor, Holo2MeasurementParameter.ObjSize);
         measureID.Add(package.num);
         Debug.Log(DateTime.Now.ToString("MM/dd/HH:mm:ss.fff") + "Display measurement point No." + package.num);
         yield return null;
@@ -287,31 +322,46 @@ public class Holo2ClientManager : MonoBehaviour
     /// </summary>
     public void StartMeasure()
     {
-        StartCoroutine("SendData");
+        counter = 0;
+        if (Holo2MeasurementParameter.measurementType == MeasurementType.Standard)
+            StartCoroutine("CoSendData");
+        else if (Holo2MeasurementParameter.measurementType == MeasurementType.Transient)
+        {
+            //エアタップを計測トリガーに(ただしほかのエアタップが不能に)
+            interactable_trigger = this.GetComponent<Interactable>();
+            interactable_trigger.IsEnabled = true;
+        }
+
     }
 
     /// <summary>
-    /// 固定時間で座標を送信
+    /// 固定時間で座標を送信(時間平均の場合)
     /// </summary>
     /// <returns></returns>
-    private IEnumerator SendData()
+    private IEnumerator CoSendData()
     {
         yield return new WaitForSeconds(1 / 6);
-        int counter = 0;
         while (Holo2MeasurementParameter._measure)
         {
             // [TODO] 時間固定(10fps)で送り続けています。どうするかは未定
             yield return new WaitForSeconds(1);
             if (UIManager._measure)
             {
-                micPositionMirror.GetSendInfo(out sendPos, out sendRotate);
-                //送信用データの作成
-                var sendPosition = new SendPosition(counter++.ToString(), sendPos, sendRotate);
-                string json = transferData.SerializeJson<SendPosition>(sendPosition);
-                tClient.StartSend(json);
-                //Debug.Log("send");
+                SendData(counter);
+                counter++;                
             }
         }
+    }
+    /// <summary>
+    /// 座標送信プロセス(時間平均＋過渡音どちらも適応)
+    /// </summary>
+    private void SendData(int counter)
+    {
+        micPositionMirror.GetSendInfo(out sendPos, out sendRotate);
+        //送信用データの作成
+        var sendPosition = new SendPosition(counter.ToString(), sendPos, sendRotate);
+        string json = transferData.SerializeJson<SendPosition>(sendPosition);
+        tClient.StartSend(json);
     }
 
     public void SendDeleteData(int dNum)
@@ -335,6 +385,10 @@ public class Holo2ClientManager : MonoBehaviour
             {
                 switch (message.sendType)
                 {
+                    case SendType.MeasurementType:
+                        transferData.DesirializeJson<How2Measure>(out var how2Measure);
+                        Holo2MeasurementParameter.measurementType = how2Measure.measureType;
+                        break;
                     case SendType.Intensity:
                         transferData.DesirializeJson<IntensityPackage>(out var intensityData);
                         var intensityLv = AIMath.CalcuIntensityLevel(intensityData.intensity);
@@ -367,6 +421,10 @@ public class Holo2ClientManager : MonoBehaviour
                             reproDatas.Enqueue(reproDataPackage);
                         }
                         break;
+                    case SendType.IIntensities: //瞬時音響インテンシティ
+                        transferData.DesirializeJson<TransIntensityPackage>(out var transIntensityPackage);
+                        iIntensitiesPackages.Enqueue(transIntensityPackage);
+                        break;
                 }
             }
         }
@@ -386,4 +444,18 @@ public class Holo2ClientManager : MonoBehaviour
         c_status_changed = true;
     }
 
+    /// <summary>
+    /// 過渡音計測時に使用、Interactableに付随
+    /// エアタップ時にデータの送信ができるようにする
+    /// </summary>
+    public void MeasurementTrigger()
+    {
+        Debug.Log("Air tapped ");
+        if (Holo2MeasurementParameter._measure && Holo2MeasurementParameter.measurementType == MeasurementType.Transient)
+        {
+            SendData(counter);
+            counter++;
+            Debug.Log("Data send" + (counter - 1).ToString());
+        }
+    }
 }
