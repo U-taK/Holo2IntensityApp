@@ -51,4 +51,6 @@ public class Holo2MeasurementParameter : MonoBehaviour
 
     //時間平均か過渡音計測を決めるステータス
     public static MeasurementType measurementType = MeasurementType.Standard;
+
+    public static int fs = 44100;
 }

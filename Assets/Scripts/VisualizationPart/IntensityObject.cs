@@ -11,6 +11,9 @@ public class IntensityObject : MonoBehaviour
     public Color[] colors;
     public Vector3[] scales;
     public GameObject child;
+    public Vector3 sumIntensity;
+    public Color sumColor;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -25,7 +28,7 @@ public class IntensityObject : MonoBehaviour
 
     public void ShowAnimation(int k)
     {
-        Debug.Log("ShowAnimation");
+
         if (tranIntensity[k].x != 0)
         {
             child.transform.localRotation = Quaternion.LookRotation(10000000000 * tranIntensity[k]);
@@ -43,5 +46,18 @@ public class IntensityObject : MonoBehaviour
         this.tranIntensity = insIntensity;
         this.colors = colors.ToArray();
         this.scales = scales.ToArray();
+    }
+
+    public void PushSumIntensity(Vector3 intensity, Color vecObjColor)
+    {
+        this.sumIntensity = intensity;
+        this.sumColor = vecObjColor;
+    }
+
+    public void ShowAveraged()
+    {          
+        child.transform.localRotation = Quaternion.LookRotation(10000000000 * sumIntensity);         
+        child.transform.GetComponent<Renderer>().material.color = sumColor;            
+        child.transform.localScale = new Vector3(Holo2MeasurementParameter.ObjSize, Holo2MeasurementParameter.ObjSize, Holo2MeasurementParameter.ObjSize * 4f);
     }
 }

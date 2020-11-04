@@ -86,6 +86,7 @@ namespace uOSC
                 colors.Add(ColorBar.DefineColor(Holo2MeasurementParameter.ColorMapID, intensityLv, Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax));
                 scales.Add(DefineSize(intensityLv, Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax));
             }
+            storage.PushSumIntensity(package.sumIntensity, vecColor);
             storage.PushInstantIntensity(package.IIntensities, colors, scales);
 
             return msPoint;

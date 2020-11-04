@@ -2,6 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Events;
+
+[System.Serializable]
+public class MyfloatEvent: UnityEvent<float>
+{
+
+}
 
 public class UpDownValueButton : MonoBehaviour
 {
@@ -9,6 +16,9 @@ public class UpDownValueButton : MonoBehaviour
 
     float interval = 5f;
     float num;
+
+    [SerializeField, Tooltip("パラメータ変更時実行処理")]
+    private MyfloatEvent OnValueChanged;
 
     // Start is called before the first frame update
     void Start()
@@ -36,11 +46,13 @@ public class UpDownValueButton : MonoBehaviour
     {
         float setValue = float.Parse(valueText.text) + interval;
         valueText.text = setValue.ToString("f3");
+        OnValueChanged.Invoke(setValue);
     }
 
     public void OnDownButtonClicked()
     {
         float setValue = float.Parse(valueText.text) - interval;
         valueText.text = setValue.ToString("f3");
+        OnValueChanged.Invoke(setValue);
     }
 }

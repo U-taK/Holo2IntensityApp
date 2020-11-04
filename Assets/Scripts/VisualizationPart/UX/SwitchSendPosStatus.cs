@@ -39,5 +39,24 @@ public class SwitchSendPosStatus : MonoBehaviour
         }
     }
 
+    public void SwitchSendPos(bool m_status)
+    {
+        UIManager._measure = m_status;
+        if (UIManager._measure)
+        {
+            text.text = "SendSuspend";
+            mrenderer.material = suspend;
+            if (Holo2MeasurementParameter.measurementType == MeasurementType.Transient)
+                interactable_trigger.IsEnabled = true;
+        }
+        else
+        {
+            text.text = "SendStart";
+            mrenderer.material = start;
+            if (Holo2MeasurementParameter.measurementType == MeasurementType.Transient)
+                interactable_trigger.IsEnabled = false;
+        }
+    }
+
 
 }
