@@ -49,10 +49,10 @@ public class AnimManager : MonoBehaviour
     //瞬時音響インテンシティアニメーション再生時は常に更新され続ける
     private IEnumerator ShowAnim()
     {
-        
+        Debug.Log("Animation Start");
         intObjs = GetComponentsInChildren<IntensityObject>();
         playNow = true;//状態遷移
-        while (nowframe > 0 || nowframe < intObjs[0].tranIntensity.Length)
+        while (nowframe >= 0 && nowframe < intObjs[0].tranIntensity.Length)
         {
             if (forced_quit)
                 yield break;

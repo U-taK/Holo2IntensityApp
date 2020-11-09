@@ -45,6 +45,7 @@ public class Holo2ClientManager : MonoBehaviour
     Queue<ReCalcDataPackage> recalcDataPackages = new Queue<ReCalcDataPackage>();
     Queue<ReproDataPackage> reproDatas = new Queue<ReproDataPackage>();
     Queue<TransIntensityPackage> iIntensitiesPackages = new Queue<TransIntensityPackage>();
+    Queue<DeleteData> deleteDatas = new Queue<DeleteData>();
 
     [SerializeField]
     private GameObject indicatorObject;
@@ -141,20 +142,18 @@ public class Holo2ClientManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Holo2MeasurementParameter._measure)
+
+        if (intensityPackages.Count > 0)
         {
-            if(intensityPackages.Count > 0)
-            {
-                var package = intensityPackages.Dequeue();
-                StartCoroutine("InstantObject", package);
-            }
-            if(recalcDataPackages.Count > 0)
-            {
-                var package = recalcDataPackages.Dequeue();
-                StartCoroutine("ReCalcIntensityMap", package);
-            }
-            
+            var package = intensityPackages.Dequeue();
+            StartCoroutine("InstantObject", package);
         }
+        if (recalcDataPackages.Count > 0)
+        {
+            var package = recalcDataPackages.Dequeue();
+            StartCoroutine("ReCalcIntensityMap", package);
+        }
+
         if (reproDatas.Count > 0)
         {
             var reprodata = reproDatas.Dequeue();
@@ -182,6 +181,11 @@ public class Holo2ClientManager : MonoBehaviour
             var package = iIntensitiesPackages.Dequeue();
             StartCoroutine("InstantIntensityObject", package);
         }
+        if(deleteDatas.Count > 0)
+        {
+            var deleteData = deleteDatas.Dequeue();
+            instanceMaanger.DeleteVectorObj(deleteData.intensityID);
+        }
     }
 
     /// <summary>
@@ -207,7 +211,7 @@ public class Holo2ClientManager : MonoBehaviour
     /// </summary>
     /// <param name="package">Serverから送信されたインテンシティ、座標、瞬時音響インテンシティを含むオブジェクト</param>
     /// <returns></returns>
-    IEnumerator InstantInstensityObject(TransIntensityPackage package)
+    IEnumerator InstantIntensityObject(TransIntensityPackage package)
     {
         var intensityLv = AcousticMathNew.CalcuIntensityLevel(package.sumIntensity);
         //コーンの色を生成
@@ -424,6 +428,10 @@ public class Holo2ClientManager : MonoBehaviour
                     case SendType.IIntensities: //瞬時音響インテンシティ
                         transferData.DesirializeJson<TransIntensityPackage>(out var transIntensityPackage);
                         iIntensitiesPackages.Enqueue(transIntensityPackage);
+                        break;
+                    case SendType.DeleteData:
+                        transferData.DesirializeJson<DeleteData>(out var deleteData);
+                        deleteDatas.Enqueue(deleteData);
                         break;
                 }
             }

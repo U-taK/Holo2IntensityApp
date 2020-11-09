@@ -10113,8 +10113,8 @@ MonoBehaviour:
   OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 393430006}
-        m_MethodName: StartTCPClient
+      - m_Target: {fileID: 351137454}
+        m_MethodName: CloseAnimPanel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -42542,6 +42542,46 @@ PrefabInstance:
         type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: SwitchSendPos
+      objectReference: {fileID: 0}
+    - target: {fileID: 7839475617179937059, guid: 14b2f904c012f204b94aa960a991840e,
+        type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7839475617179937059, guid: 14b2f904c012f204b94aa960a991840e,
+        type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 351137454}
+    - target: {fileID: 7839475617179937059, guid: 14b2f904c012f204b94aa960a991840e,
+        type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: OpenAnimPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 7839475617179937059, guid: 14b2f904c012f204b94aa960a991840e,
+        type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Mode
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 7839475617179937059, guid: 14b2f904c012f204b94aa960a991840e,
+        type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7839475617179937059, guid: 14b2f904c012f204b94aa960a991840e,
+        type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Target
+      value: 
+      objectReference: {fileID: 1423990309}
+    - target: {fileID: 7839475617179937059, guid: 14b2f904c012f204b94aa960a991840e,
+        type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_MethodName
+      value: SwitchSendPos
+      objectReference: {fileID: 0}
+    - target: {fileID: 7839475617179937059, guid: 14b2f904c012f204b94aa960a991840e,
+        type: 3}
+      propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 14b2f904c012f204b94aa960a991840e, type: 3}
