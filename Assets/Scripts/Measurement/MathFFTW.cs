@@ -39,7 +39,7 @@ class MathFFTW
         }
 
         //FFTした時のサンプル範囲を求める
-        float df = fs / sampleLength;
+        float df = (float)fs / sampleLength;
         int fftIndexMin = Mathf.CeilToInt(freq_range_min / df)*2;
         int fftIndexMax = Mathf.FloorToInt(freq_range_max / df)*2;
 
@@ -90,12 +90,12 @@ class MathFFTW
                 }
 
                 //積分範囲
-                sig01 += imG01 / (fftIndex / 2);
-                sig02 += imG02 / (fftIndex / 2);
-                sig03 += imG03 / (fftIndex / 2);
-                sig12 += imG12 / (fftIndex / 2);
-                sig13 += imG13 / (fftIndex / 2);
-                sig23 += imG23 / (fftIndex / 2);
+                sig01 += imG01 / (fftIndex * df / 2);
+                sig02 += imG02 / (fftIndex * df / 2);
+                sig03 += imG03 / (fftIndex * df / 2);
+                sig12 += imG12 / (fftIndex * df / 2);
+                sig13 += imG13 / (fftIndex * df / 2);
+                sig23 += imG23 / (fftIndex * df / 2);
             }
         }
 

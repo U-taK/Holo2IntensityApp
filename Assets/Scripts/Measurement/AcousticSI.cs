@@ -8,7 +8,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-class AcousticSI{
+class AcousticSI
+{
 
     /// <summary>
     /// 瞬時音響インテンシティを直接法と同様に算出
@@ -47,7 +48,7 @@ class AcousticSI{
     // Use this for initialization
 
     //粒子速度の算出
-    private static double[] ParticleVer(double[] mic0, double[] mic1,float lo, float dr)
+    private static double[] ParticleVer(double[] mic0, double[] mic1, float lo, float dr)
     {
         var particle = new double[mic0.Length];
         float t = 1f / 44100f;
@@ -79,14 +80,16 @@ class AcousticSI{
         {
             sum += instance[count];
         }
-        return sum/instance.Length;
+        return sum / instance.Length;
     }
-    void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+    void Start()
+    {
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
 }

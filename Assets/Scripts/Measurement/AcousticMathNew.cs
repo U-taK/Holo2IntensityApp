@@ -45,7 +45,7 @@ class AcousticMathNew
         }
 
         //FFTした時のサンプル範囲を求める
-        float df = fs / sampleLength;
+        float df = (float)fs / sampleLength;
         int fftIndexMin = Mathf.CeilToInt(freq_range_min / df);
         int fftIndexMax = Mathf.FloorToInt(freq_range_max / df);
 
@@ -96,12 +96,12 @@ class AcousticMathNew
                 }
 
                 //積分範囲
-                sig01 += imG01 / fftIndex;
-                sig02 += imG02 / fftIndex;
-                sig03 += imG03 / fftIndex;
-                sig12 += imG12 / fftIndex;
-                sig13 += imG13 / fftIndex;
-                sig23 += imG23 / fftIndex;
+                sig01 += imG01 / (fftIndex * df);
+                sig02 += imG02 / (fftIndex * df);
+                sig03 += imG03 / (fftIndex * df);
+                sig12 += imG12 / (fftIndex * df);
+                sig13 += imG13 / (fftIndex * df);
+                sig23 += imG23 / (fftIndex * df);
             }
         }
 
@@ -198,12 +198,13 @@ class AcousticMathNew
     }
 
     /// <summary>
-    /// Original filter function(2次のバンドパスフィルタ)
-    /// 周波数を変更する場合はc_freqを変更
+    /// Original filter function
     /// </summary>
-    /// <param name="input">入力信号</param>
-    /// <param name="signals">出力信号</param>
-    /// <param name="sampleLength">出力信号長</param>
+    /// <param name="cloop">current loop number</param>
+    /// <param name="inSamplesL"></param>
+    /// <param name="inSamplesR"></param>
+    /// <param name="outSamplesL"></param>
+    /// <param name="outSamplesR"></param>
     public static void BPFilter(double[] input, out double[] signals, int sampleLength)
     {
         int c_freq = 1000;
@@ -230,7 +231,10 @@ class AcousticMathNew
 
             signals[m] = b0 * input[m] + b1 * input[m - 1] + b2 * input[m - 2] -
             a1 * signals[m - 1] - a2 * signals[m - 2];
+
         }
+
+
     }
 
 

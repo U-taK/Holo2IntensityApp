@@ -152,7 +152,7 @@ public class FFTWTester : MonoBehaviour
             var fs = 44100;
             var fmin = 707f;
             var fmax = 1414f;
-            var adensity = 1.4f;
+            var adensity = 1.1923f;
             var dr = 0.05f;
             sw.Start();
             //処理
@@ -178,6 +178,29 @@ public class FFTWTester : MonoBehaviour
 
             ts = sw.Elapsed;
             Debug.Log($"　{sw.ElapsedMilliseconds}ミリ秒");
+        }
+        if (Input.GetKeyDown(KeyCode.J))
+        {
+            Debug.Log("SoundIntensity (directMethod)");
+            ReadTestData();
+
+            var sw = new System.Diagnostics.Stopwatch();
+            var adensity = 1.1923f;
+            var dr = 0.05f;
+            sw.Start();
+            //処理
+            var intensities = AcousticSI.DirectMethod(signal, adensity, dr);
+            var sumIntensity = AcousticSI.SumIntensity(intensities);
+            var level = MathFFTW.CalcuIntensityLevel(sumIntensity);
+            sw.Stop();
+            Debug.Log("Test1: Instant Intensity: ");
+
+            Debug.Log($" Intensity:({sumIntensity.x},{sumIntensity.y},{sumIntensity.z}) ");
+            Debug.Log($" Intensity level is {level}");
+
+            TimeSpan ts = sw.Elapsed;
+            Debug.Log($"　{sw.ElapsedMilliseconds}ミリ秒");
+            
         }
     }
 
