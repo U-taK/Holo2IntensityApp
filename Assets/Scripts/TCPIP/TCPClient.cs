@@ -187,53 +187,54 @@ namespace HoloLensModule.Network
 #if WINDOWS_UWP
             if (readTask == null || readTask.IsCompleted == true)
             {
-        readTask = Task.Run(async() =>
-        {
-            StreamReader reader;
-            try
-            {
-                await socket.ConnectAsync(new HostName(host), port.ToString());
-                writer = new StreamWriter(socket.OutputStream.AsStreamForWrite());
-                reader = new StreamReader(socket.OutputStream.AsStreamForRead());
-
-            }
-            catch (Exception e)
-            {
-                var trace = new StackTrace(e, true);
-                
-                return;
-            }
-            
-            byte[] bytes = new byte[65536];
-            clientState.isConnected = true;
-            //接続OKイベント発生
-            OnConnected(new EventArgs());
-            while (isActiveThread)
-            {
-                try
+                readTask = Task.Run(async () =>
                 {
-                    int num = await reader.BaseStream.ReadAsync(bytes, 0, bytes.Length);
-                    if (num > 0)
+                    StreamReader reader;
+                    try
                     {
-                        byte[] data = new byte[num];
-                        Array.Copy(bytes, 0, data, 0, num);
-                        if (ListenerMessageEvent != null) 
-                            ListenerMessageEvent(Encoding.UTF8.GetString(data));
-                        /*if (ListenerByteEvent != null) 
-                            ListenerByteEvent(data);*/
+                        await socket.ConnectAsync(new HostName(host), port.ToString());
+                        writer = new StreamWriter(socket.OutputStream.AsStreamForWrite());
+                        reader = new StreamReader(socket.OutputStream.AsStreamForRead());
+
                     }
-                }
-                catch (Exception e)
-                {
-                }
+                    catch (Exception e)
+                    {
+                        var trace = new StackTrace(e, true);
+
+                        return;
+                    }
+
+                    byte[] bytes = new byte[65536];
+                    clientState.isConnected = true;
+                    //接続OKイベント発生
+                    OnConnected(new EventArgs());
+                    while (isActiveThread)
+                    {
+                        try
+                        {
+                            int num = await reader.BaseStream.ReadAsync(bytes, 0, bytes.Length);
+                            if (num > 0)
+                            {
+                                byte[] data = new byte[num];
+                                Array.Copy(bytes, 0, data, 0, num);
+                                if (ListenerMessageEvent != null)
+                                    ListenerMessageEvent(Encoding.UTF8.GetString(data));
+                                /*if (ListenerByteEvent != null) 
+                                    ListenerByteEvent(data);*/
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                        }
+                    }
+                    socket.Dispose();
+                    if (writer != null)
+                    {
+                        writer.Dispose();
+                    }
+                    writer = null;
+                });
             }
-            socket.Dispose();
-            if (writer != null)
-            {
-                writer.Dispose();
-            }
-            writer = null;
-        });
 #else
             //IP作成
             var ipEndPoint = new IPEndPoint(
@@ -348,19 +349,19 @@ namespace HoloLensModule.Network
         public void StartSend(string str)
         {
 #if WINDOWS_UWP
-        byte[] data = enc.GetBytes(str + "\r\n");
-        if (writetask == null || writetask.IsCompleted == true)
-        {
-            if (writer != null)
+            byte[] data = enc.GetBytes(str + "\r\n");
+            if (writetask == null || writetask.IsCompleted == true)
             {
-                writetask = Task.Run(async () =>
+                if (writer != null)
                 {
-                    await writer.BaseStream.WriteAsync(data, 0, data.Length);
-                    await writer.FlushAsync();
-                });
+                    writetask = Task.Run(async () =>
+                    {
+                        await writer.BaseStream.WriteAsync(data, 0, data.Length);
+                        await writer.FlushAsync();
+                    });
+                }
             }
-        }
-#else
+            #else
             if (!IsClosed)
             {
                 //文字列をBYTE配列に変換
