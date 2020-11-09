@@ -8,11 +8,6 @@ namespace HoloLensModule.Network
 {
     public class StateObject
     {
-        private static StateObject _stateObject = new StateObject();
-        public static StateObject stateObject {get { return _stateObject; } }
-        private StateObject() { }
-
-
         /** メンバ **/
         //Client Socket
         public Socket workSocket { get; set; } = null;
@@ -49,5 +44,23 @@ namespace HoloLensModule.Network
             else Debug.Log("workSocket閉じてたよ");
         }
         
+    }
+
+    public class ServerStateObject: StateObject
+    {
+        /* メンバ */
+        //接続状態のクライアント数
+        public int connectedClientNum { get; set; } = 0;
+    }
+
+    public class ClientStateObject: StateObject
+    {
+        /* メンバ */
+        //接続しているかどうか
+        public bool isConnected { get; set; } = false;
+        //自分のポート番号
+        public int myPort { get; set; }
+        //接続状態のクライアント数
+        public int connectedClientNum { get; set; } = 0;
     }
 }
