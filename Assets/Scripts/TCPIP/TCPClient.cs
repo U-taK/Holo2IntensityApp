@@ -194,7 +194,7 @@ namespace HoloLensModule.Network
                     {
                         await socket.ConnectAsync(new HostName(host), port.ToString());
                         writer = new StreamWriter(socket.OutputStream.AsStreamForWrite());
-                        reader = new StreamReader(socket.OutputStream.AsStreamForRead());
+                        reader = new StreamReader(socket.InputStream.AsStreamForRead());
 
                     }
                     catch (Exception e)
@@ -279,11 +279,11 @@ namespace HoloLensModule.Network
         {
             try
             {                
-                clientState.workSocket = client;
+                clientState.workSockets.Add(client);
 
                 Debug.Log("受信するよ");
                 client.BeginReceive(clientState.buffer, 0, StateObject.BufferSize,
-                    0, new AsyncCallback(ReceiveCallback), clientState);
+                    0, new AsyncCallback(ReceiveCallback), client);
             }
             catch (Exception e)
             {
@@ -294,8 +294,7 @@ namespace HoloLensModule.Network
         {
             try
             {
-                var clientState = (ClientStateObject)ar.AsyncState;
-                var client = clientState.workSocket;
+                var client = (Socket)ar.AsyncState;
 
 
                 //受信
@@ -322,7 +321,7 @@ namespace HoloLensModule.Network
                     {
                         //受信続行
                         client.BeginReceive(clientState.buffer, 0, StateObject.BufferSize,
-                            0, new AsyncCallback(ReceiveCallback), clientState);
+                            0, new AsyncCallback(ReceiveCallback), client);
                     }
                 }
                 /*else
@@ -332,7 +331,7 @@ namespace HoloLensModule.Network
                     Debug.Log("受信終了");
                     //永遠に受信し続ける
                     client.BeginReceive(clientState.buffer, 0, StateObject.BufferSize,
-                            0, new AsyncCallback(ReceiveCallback), clientState);
+                            0, new AsyncCallback(ReceiveCallback), client);
                 }*/
             }
             catch (Exception e)

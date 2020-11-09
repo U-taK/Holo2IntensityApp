@@ -195,7 +195,7 @@ namespace HoloLensModule.Network
             //接続OKイベント発生
             OnConnected(new EventArgs(),log);
 
-            serverState.workSocket = handler;
+            serverState.workSockets.Add(handler);
             Debug.Log("受信するよ");
 
             //接続要求待機再開
@@ -203,12 +203,13 @@ namespace HoloLensModule.Network
                 new AsyncCallback(AcceptCallback), listener);*/
             //送信時に受信開始、接続要求待機終了
             handler.BeginReceive(serverState.buffer, 0, ServerStateObject.BufferSize, 0,
-                new AsyncCallback(ReadCallback), serverState);
+                new AsyncCallback(ReadCallback), handler);
         }
         private void ReadCallback(IAsyncResult ar)
         {
-            var serverState = (ServerStateObject)ar.AsyncState;
-            var handler = serverState.workSocket;
+            // var serverState = (ServerStateObject)ar.AsyncState;
+            // var handler = serverState.workSocket;
+            var handler = (Socket)ar.AsyncState;
 
             try
             {
@@ -228,7 +229,7 @@ namespace HoloLensModule.Network
                     //TODO:受信中断、再開処理？
                     //受信続行
                     handler.BeginReceive(serverState.buffer, 0, ServerStateObject.BufferSize, 0,
-                        new AsyncCallback(ReadCallback), serverState);
+                        new AsyncCallback(ReadCallback), handler);
                 }
                 else
                 {

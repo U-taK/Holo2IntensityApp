@@ -10,7 +10,7 @@ namespace HoloLensModule.Network
     {
         /** メンバ **/
         //Client Socket
-        public Socket workSocket { get; set; } = null;
+        public List<Socket> workSockets { get; set; } = new List<Socket>();
 
         //受信素データバッファサイズ
         //多めに16384ぐらい取ってみる
@@ -24,11 +24,12 @@ namespace HoloLensModule.Network
         /// </summary>
         public void CloseWorkSocket()
         {
-            if (workSocket != null)
+            if (workSockets.Count > 0)
             {
                 try
                 {
-                    workSocket.Shutdown(SocketShutdown.Both);
+                    foreach(var workSocket in workSockets)
+                        workSocket.Shutdown(SocketShutdown.Both);
                 }
                 catch (Exception e)
                 {
@@ -36,8 +37,11 @@ namespace HoloLensModule.Network
                 }
                 finally
                 {
-                    workSocket.Close();
-                    workSocket = null;
+                    foreach (var workSocket in workSockets)
+                    {
+                        workSocket.Close();
+                        //workSocket = null;
+                    }
                     Debug.Log("workSocket閉じたよ");
                 }
             }
