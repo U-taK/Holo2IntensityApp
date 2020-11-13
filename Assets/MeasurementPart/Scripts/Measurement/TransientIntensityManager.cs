@@ -26,7 +26,7 @@ public class TransientIntensityManager : MonoBehaviour
     Dictionary<int, GameObject> intensities = new Dictionary<int, GameObject>();
     //送信データの管理番号
     int Num = 0;
-
+   
     TransientServerManager tServerManager;
 
     // Start is called before the first frame update
@@ -62,9 +62,18 @@ public class TransientIntensityManager : MonoBehaviour
         //録音開始
         var soundSignals = asiocsharpdll.GetAsioSoundSignals(MeasurementParameter.SampleNum, MeasurementParameter.CalibValue);
 
-        //瞬時音響インテンシティ計算
-        var intensityDirection = AcousticSI.DirectMethod(soundSignals, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval);
-
+        List<Vector3> intensityList = new List<Vector3>();
+        //時間変化する音響インテンシティを指定したアルゴリズムを元に計算
+        switch (algorithmList.value)
+        {
+            case 0://直接法
+                intensityList.AddRange(AcousticSI.DirectMethod(soundSignals, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval));
+                break;
+            case 1://STFTを使った時間周波数領域での計算処理
+                intensityList.AddRange(MathFFTW.STFTmethod(soundSignals, 128, 256, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval));
+                break;
+        }
+        var intensityDirection = intensityList.ToArray();
         //直接法計算
         var sumIntensity = AcousticSI.SumIntensity(intensityDirection);
         var sumIntensityLv = MathFFTW.CalcuIntensityLevel(sumIntensity);

@@ -202,6 +202,62 @@ public class FFTWTester : MonoBehaviour
             Debug.Log($"　{sw.ElapsedMilliseconds}ミリ秒");
             
         }
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            Debug.Log("FFT2D");
+            var sw = new System.Diagnostics.Stopwatch();
+
+            sw.Start();
+            //Test
+            double[] x = { 1.2, 3.4, 5.6, 7.8 };
+            double[][] x2 = new double[8][];
+            for (int i = 0; i < 8; i++)
+            {
+                x2[i] = new double[4] { 1.2, 3.4, 5.6, 7.8 };
+            }
+            var dft = MathFFTW.FFT(x,true);
+            var dft2 = MathFFTW.FFT2D(x2,true);
+
+            sw.Stop();
+            Debug.Log("Test1: FFTW");
+            DisplayCompex(dft);
+            Debug.Log("FFTW2D = ");
+            for(int j = 0; j < 8; j++)
+                DisplayCompex(dft2[j]);
+            TimeSpan ts = sw.Elapsed;
+            Debug.Log($"　{sw.ElapsedMilliseconds}ミリ秒");            
+        }
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            Debug.Log("SoundIntensity (STFTMethod)");
+            ReadTestData();
+
+            var sw = new System.Diagnostics.Stopwatch();
+            var adensity = 1.1923f;
+            var dr = 0.05f;
+            var fmin = 707f;
+            var fmax = 1414f;
+            sw.Start();
+            //処理
+            var intensities = MathFFTW.STFTmethod(signal,128,256,44100,fmin,fmax, adensity, dr);
+            var sumIntensity = AcousticSI.SumIntensity(intensities);
+            var level = MathFFTW.CalcuIntensityLevel(sumIntensity);
+            sw.Stop();
+            Debug.Log("Test1: Instant Intensity: ");
+
+            Debug.Log($" Intensity:({sumIntensity.x},{sumIntensity.y},{sumIntensity.z}) ");
+            Debug.Log($" Intensity level is {level}");
+            Debug.Log($" Intensity num id {intensities.Length}");
+            TimeSpan ts = sw.Elapsed;
+            Debug.Log($"　{sw.ElapsedMilliseconds}ミリ秒");
+            Debug.Log("おまけ－インテンシティレベル");
+
+            foreach (var intensity in intensities)
+            {
+                level = MathFFTW.CalcuIntensityLevel(intensity);
+                Debug.Log($"instant intensity level is {level} dB");
+            }
+        }
     }
 
     void DisplayCompex(double[] x)
