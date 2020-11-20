@@ -118,11 +118,13 @@ public class ReproDataPackage: ReCalcDataPackage
 public class How2Measure: ServerMessage
 {
     public MeasurementType measureType;
+    public int blockSize;
 
-    public How2Measure(MeasurementType type): base()
+    public How2Measure(MeasurementType type, int b_size): base()
     {
         sendType = SendType.MeasurementType;
         measureType = type;
+        blockSize = b_size;
     }
 
     public How2Measure(): base()
