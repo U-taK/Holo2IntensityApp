@@ -70,13 +70,13 @@ public class TransientIntensityManager : MonoBehaviour
                 intensityList.AddRange(AcousticSI.DirectMethod(soundSignals, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval));
                 break;
             case 1://STFTを使った時間周波数領域での計算処理
-                intensityList.AddRange(MathFFTW.STFTmethod(soundSignals, 128, 256, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval));
+                intensityList.AddRange(MathFFTW.STFTmethod(soundSignals, 64, 128, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval));
                 break;
             case 2://アンビソニックマイクを使った時間領域のpsudoIntensityの推定
                 intensityList.AddRange(MathAmbisonics.TdomMethod(soundSignals, MeasurementParameter.AtmDensity, 340));
                 break;
             case 3://アンビソニックマイクを使った時間周波数領域のpsudoIntensityの推定
-                intensityList.AddRange(MathAmbisonics.TFdomMethod(soundSignals, 128, 256, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, 340));
+                intensityList.AddRange(MathAmbisonics.TFdomMethod(soundSignals, 64, 128, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, 340));
                 break;
         }
         var intensityDirection = intensityList.ToArray();
