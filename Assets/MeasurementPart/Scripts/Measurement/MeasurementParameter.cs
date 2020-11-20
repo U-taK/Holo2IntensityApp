@@ -124,4 +124,7 @@ public class MeasurementParameter : MonoBehaviour
 
     //データの保存数
     public static int plotNumber;
+
+    //過渡音を対象にしたインテンシティを計算する際のブロックサイズ
+    public static int i_block = 1;
 }
