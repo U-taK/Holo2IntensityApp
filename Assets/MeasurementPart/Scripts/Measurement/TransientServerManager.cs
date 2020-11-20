@@ -27,6 +27,8 @@ public class TransientServerManager : MonoBehaviour
 
     Queue<DeleteData> deleteDatas = new Queue<DeleteData>();
 
+    bool onServer = false; //サーバーの受付を開始したかどうか
+
     // Start is called before the first frame update
     void Start()
     {
@@ -74,14 +76,17 @@ public class TransientServerManager : MonoBehaviour
     /**tcp始めるボタンに紐づけ**/
     public void StartTCPServer()
     {
-        //ローカルサーバーを使うことを推定        
-        var host = MeasurementParameter.TCPAdress != null ? MeasurementParameter.TCPAdress : "192.168.0.42";
-        tServer = new TCPServer(host, port);
-        //データ受信イベント
-        tServer.OnReceiveData += new TCPServer.ReceiveEventHandler(tServer_OnReceiveData);
-        tServer.OnDisconnected += new TCPServer.DisconnectedEventHandler(tServer_OnDisconnected);
-        tServer.OnConnected += new TCPServer.ConnectedEventHandler(tServer_OnConnected);
-
+        if (!onServer)
+        {
+            //ローカルサーバーを使うことを推定        
+            var host = MeasurementParameter.TCPAdress != null ? MeasurementParameter.TCPAdress : "192.168.0.42";
+            tServer = new TCPServer(host, port);
+            //データ受信イベント
+            tServer.OnReceiveData += new TCPServer.ReceiveEventHandler(tServer_OnReceiveData);
+            tServer.OnDisconnected += new TCPServer.DisconnectedEventHandler(tServer_OnDisconnected);
+            tServer.OnConnected += new TCPServer.ConnectedEventHandler(tServer_OnConnected);
+            onServer = true;
+        }
         //計測データの設定反映
         settingManager.InitParam();
 
