@@ -392,6 +392,7 @@ public class Holo2ClientManager : MonoBehaviour
                     case SendType.MeasurementType:
                         transferData.DesirializeJson<How2Measure>(out var how2Measure);
                         Holo2MeasurementParameter.measurementType = how2Measure.measureType;
+                        Holo2MeasurementParameter.i_block = how2Measure.blockSize;
                         break;
                     case SendType.Intensity:
                         transferData.DesirializeJson<IntensityPackage>(out var intensityData);

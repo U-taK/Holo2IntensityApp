@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Security;
 using UnityEngine;
+using Microsoft.MixedReality.Toolkit.UI;
 
 namespace uOSC
 {
@@ -34,10 +35,14 @@ namespace uOSC
             VectorObj.transform.localRotation = Quaternion.LookRotation(10000000000 * intensity);
             VectorObj.transform.GetComponent<Renderer>().material.color = vecColor;
             VectorObj.name = "IntensityObject";
+            var interact = VectorObj.GetComponent<Interactable>();
+            if (interact != null)
+                interact.IsEnabled = !UIManager._measure;
+
             var panel = VectorObj.GetComponentInChildren<IntensityPanel>();
             if (panel != null)
             {
-                Destroy(panel.gameObject);
+                panel.UpdatePanel(this, intensity, No, micPos);
                 panels.Add(panel);
             }
             intensities.Add(No, VectorObj);
@@ -163,6 +168,17 @@ namespace uOSC
             else
             {
                 return Vector3.zero;
+            }
+        }
+        /// <summary>
+        /// インテンシティの情報を含むパネルを計測時以外にonにする
+        /// </summary>
+        public void PanelFocusSwitch()
+        {
+            foreach(var intensity in intensities.Values)
+            {
+                var interact = intensity.GetComponent<Interactable>();
+                interact.IsEnabled = !UIManager._measure;
             }
         }
     }
