@@ -133,10 +133,8 @@ public class TransientServerManager : MonoBehaviour
     /// <returns></returns>
     public double[] ReadSignal()
     {
-        //byteファイル風読み込み
-        //TextAsset asset = Resources.Load("whitenoise", typeof(TextAsset)) as TextAsset;
-        //TextAsset asset = Resources.Load("SIN1kHz", typeof(TextAsset)) as TextAsset;
-        TextAsset asset = Resources.Load("SIN1kHzsMin", typeof(TextAsset)) as TextAsset;
+        //byteファイル風読み込み        
+        TextAsset asset = Resources.Load(MeasurementParameter.TargetSource, typeof(TextAsset)) as TextAsset;
         //読込
         double[] tspSignal = new double[asset.bytes.Length / 8];
         tspSignal = Bytes2array(asset, asset.bytes.Length / 8);

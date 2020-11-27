@@ -10,6 +10,7 @@ using UnityEngine.UI;
 public class StartSceneManager : MonoBehaviour
 {
     private string DATA_SAVED_FOLDER = Application.streamingAssetsPath;
+    private string SOUND_PATH;
 
     //4点マイクのパラメータ管理
     [SerializeField]
@@ -32,10 +33,15 @@ public class StartSceneManager : MonoBehaviour
     InputField inSampleLength;
     SceneManage sceneManage;
 
+    [SerializeField]
+    Dropdown soundList;
+
     // Start is called before the first frame update
     //シーンを変更してもパラメータは変化されてないことを可視化
     void Start()
     {
+        SOUND_PATH = Application.dataPath + "/Resources";
+
         try
         {
             sceneManage = GameObject.Find("SceneManager").GetComponent<SceneManage>();
@@ -51,6 +57,9 @@ public class StartSceneManager : MonoBehaviour
         UpdateParameter();
         //使用できるマイクセットの更新
         UpdateMicSetList();
+        //使用できる音源の更新
+        UpdateSoundSetList();
+        soundList.onValueChanged.AddListener(SoundChange);
     }
 
     /// <summary>
@@ -162,6 +171,24 @@ public class StartSceneManager : MonoBehaviour
             mSetList.options.Add(new Dropdown.OptionData { text = f.Name });
         }
         mSetList.RefreshShownValue();
+    }
+
+    private void UpdateSoundSetList()
+    {
+        soundList.ClearOptions();
+        var di = new DirectoryInfo(SOUND_PATH);
+        files = di.GetFiles("*.bytes", SearchOption.TopDirectoryOnly);
+        foreach (FileInfo f in files)
+        {
+            soundList.options.Add(new Dropdown.OptionData { text = f.Name });
+        }
+        soundList.RefreshShownValue();
+    }
+
+    private void SoundChange(int ID)
+    {
+        MeasurementParameter.TargetSource = soundList.options[ID].text;
+        Debug.Log("Change to " + MeasurementParameter.TargetSource);
     }
 
     private void UpdateMeasurementParameter(MicSetClass micSet)
