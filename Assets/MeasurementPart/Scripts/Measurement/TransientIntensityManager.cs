@@ -47,7 +47,7 @@ public class TransientIntensityManager : MonoBehaviour
             //時間領域で平均を取らない場合
             case 0:
             case 2:
-                MeasurementParameter.i_block = 1;
+                MeasurementParameter.i_block = 2;
                 break;
             case 1:
             case 3:

@@ -136,9 +136,14 @@ public class ServerManager : MonoBehaviour
     {
         Debug.Log("Clientと接続完了");
         logQueue.Enqueue(log + " is connected.");
-        How2Measure measureType = new How2Measure(MeasurementType.Standard);
+        How2Measure measureType = new How2Measure(MeasurementType.Standard,MeasurementParameter.i_block);
         tServer.SendAllClient(transferData.SerializeJson<How2Measure>(measureType));
-    } 
+
+        //共有された方のアプリケーションでもsettingパラメータを共有
+        var holoSetting = new SettingSender("ForSharing", MeasurementParameter.colormapID, MeasurementParameter.MaxIntensity, MeasurementParameter.MinIntensity, MeasurementParameter.objSize);
+        tServer.SendAllClient(transferData.SerializeJson<SettingSender>(holoSetting));
+
+    }
 
     /// <summary>
     /// アプリ終了時に呼び出し、Serverを止める
@@ -177,6 +182,7 @@ public class ServerManager : MonoBehaviour
                         break;
                     case SendType.SettingSender:
                         transferData.DesirializeJson<SettingSender>(out var holoSetting);
+                        tServer.SendAllClient(transferData.SerializeJson<SettingSender>(holoSetting));
                         MeasurementParameter.HoloLensParameterUpdate(holoSetting);
                         Debug.Log("[Server] Holo setting ColorMapID: " + holoSetting.colorMapID);
                         break;                    

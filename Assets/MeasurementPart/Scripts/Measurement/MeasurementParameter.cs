@@ -54,6 +54,13 @@ public class MeasurementParameter : MonoBehaviour
         get { return asioDriver; }
     }
 
+    static string targetSource = "SIN1kHzsMin.bytes";
+
+    public static string TargetSource
+    {
+        set { targetSource = value; }
+        get { return targetSource; }
+    }
     //周波数バンド
     static int freqMin = 700;
     static int freqMax = 1000;
