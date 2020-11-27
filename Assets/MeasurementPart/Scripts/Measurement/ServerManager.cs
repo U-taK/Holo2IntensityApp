@@ -185,6 +185,7 @@ public class ServerManager : MonoBehaviour
                         tServer.SendAllClient(transferData.SerializeJson<SettingSender>(holoSetting));
                         MeasurementParameter.HoloLensParameterUpdate(holoSetting);
                         Debug.Log("[Server] Holo setting ColorMapID: " + holoSetting.colorMapID);
+                        logQueue.Enqueue($"Intensity range: {holoSetting.lvMin} ~ {holoSetting.lvMax}");
                         break;                    
                     case SendType.SpatialMesh:
                         transferData.DesirializeJson<SpatialMesh>(out var spatialMesh);

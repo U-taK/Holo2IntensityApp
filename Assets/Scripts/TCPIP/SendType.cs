@@ -10,6 +10,7 @@ public enum SendType
     Intensity,
     IIntensities,
     ReCalcData,
+    ReCalcTransData,
     SpatialMap,
     SpatialMesh,
     DeleteData,

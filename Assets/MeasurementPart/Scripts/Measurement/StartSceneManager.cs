@@ -10,7 +10,6 @@ using UnityEngine.UI;
 public class StartSceneManager : MonoBehaviour
 {
     private string DATA_SAVED_FOLDER = Application.streamingAssetsPath;
-    private string SOUND_PATH;
 
     //4点マイクのパラメータ管理
     [SerializeField]
@@ -40,8 +39,6 @@ public class StartSceneManager : MonoBehaviour
     //シーンを変更してもパラメータは変化されてないことを可視化
     void Start()
     {
-        SOUND_PATH = Application.dataPath + "/Resources";
-
         try
         {
             sceneManage = GameObject.Find("SceneManager").GetComponent<SceneManage>();
@@ -176,7 +173,7 @@ public class StartSceneManager : MonoBehaviour
     private void UpdateSoundSetList()
     {
         soundList.ClearOptions();
-        var di = new DirectoryInfo(SOUND_PATH);
+        var di = new DirectoryInfo(DATA_SAVED_FOLDER);
         files = di.GetFiles("*.bytes", SearchOption.TopDirectoryOnly);
         foreach (FileInfo f in files)
         {

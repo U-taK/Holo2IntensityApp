@@ -75,6 +75,29 @@ public class TransIntensityPackage: ServerMessage
 }
 
 [Serializable]
+public class ReCalcTransientDataPackage: ServerMessage
+{
+    public int storageNum;
+    public List<Vector3> intensities;
+    public List<Vector3[]> iintensityList;
+    public List<int> sendNums;
+    public ReCalcTransientDataPackage(int storageNum): base()
+    {
+        sendType = SendType.ReCalcTransData;
+        this.storageNum = storageNum;
+        sendNums = new List<int>();
+        intensities = new List<Vector3>();
+        iintensityList = new List<Vector3[]>();
+    }
+
+    public ReCalcTransientDataPackage() : base()
+    {
+        sendType = SendType.None;
+    }
+}
+
+
+[Serializable]
 public class ReCalcDataPackage: ServerMessage
 {
     public int storageNum;

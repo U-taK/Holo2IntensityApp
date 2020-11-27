@@ -116,6 +116,7 @@ public class TransientServerManager : MonoBehaviour
                         transferData.DesirializeJson<SettingSender>(out var holoSetting);
                         MeasurementParameter.HoloLensParameterUpdate(holoSetting);
                         Debug.Log("[Server] Holo setting ColorMapID: " + holoSetting.colorMapID);
+                        logQueue.Enqueue($"Intensity range: {holoSetting.lvMin} ~ {holoSetting.lvMax}");
                         break;
                     case SendType.DeleteData:
                         transferData.DesirializeJson<DeleteData>(out var deleteData);
@@ -207,6 +208,22 @@ public class TransientServerManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Updateボタンに紐づけ
+    /// 条件を変え再計算をし表示を更新する
+    /// </summary>
+    public async void UpdateTransientData()
+    {
+        settingManager.InitParam();
+        SettingSender ud_setting = new SettingSender("NewSetting", MeasurementParameter.colormapID, MeasurementParameter.MaxIntensity, MeasurementParameter.MinIntensity, MeasurementParameter.objSize);
+        //設定データをHoloLens2に送信
+        string json = transferData.SerializeJson<SettingSender>(ud_setting);
+        tServer.SendAllClient(json);
+        //再計算を実行
+        ReCalcTransientDataPackage reCalcTransientDataPackage = await tIntensityManager.RecalcTransientIntensity();
+        string json2 = transferData.SerializeJson<ReCalcTransientDataPackage>(reCalcTransientDataPackage);
+        tServer.SendAllClient(json2);
+    }
     private void OnApplicationQuit()
     {
         if (tServer != null)
