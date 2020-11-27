@@ -139,6 +139,83 @@ public class TransientIntensityManager : MonoBehaviour
         yield return null;
     }
 
+    public async Task<ReCalcTransientDataPackage> RecalcTransientIntensity()
+    {
+        //データの更新
+        ReCalcTransientDataPackage recalcTransientIntensity = await Task.Run(() => AsyncReCalc());
+
+        //送信データの更新
+        StartCoroutine("UpdateEditor", recalcTransientIntensity);
+
+        return recalcTransientIntensity;
+    }
+
+    private ReCalcTransientDataPackage AsyncReCalc()
+    {
+        ReCalcTransientDataPackage data = new ReCalcTransientDataPackage(dataStorages.Count);
+        List<Vector3> intensityList = new List<Vector3>();
+        foreach (DataStorage dataStorage in dataStorages.Values)
+        {
+            intensityList.Clear();
+            //時間変化する音響インテンシティを指定したアルゴリズムを元に計算
+            switch (algorithmList.value)
+            {
+                case 0://直接法
+                    intensityList.AddRange(AcousticSI.DirectMethod(dataStorage.soundSignal, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval));
+                    break;
+                case 1://STFTを使った時間周波数領域での計算処理
+                    intensityList.AddRange(MathFFTW.STFTmethod(dataStorage.soundSignal, MeasurementParameter.i_block / 2, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval));
+                    break;
+                case 2://アンビソニックマイクを使った時間領域のpsudoIntensityの推定
+                    intensityList.AddRange(MathAmbisonics.TdomMethod(dataStorage.soundSignal, MeasurementParameter.AtmDensity, 340));
+                    break;
+                case 3://アンビソニックマイクを使った時間周波数領域のpsudoIntensityの推定
+                    intensityList.AddRange(MathAmbisonics.TFdomMethod(dataStorage.soundSignal, MeasurementParameter.i_block / 2, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, 340));
+                    break;
+            }
+            var intensityDirection = intensityList.ToArray();
+            //平均インテンシティ計算
+            var sumIntensity = AcousticSI.SumIntensity(intensityDirection);
+
+            data.sendNums.Add(dataStorage.measureNo);
+            data.intensities.Add(sumIntensity);
+            data.iintensityList.Add(intensityDirection);
+        }
+
+        return data;
+    }
+
+    /// <summary>
+    /// 更新インテンシティデータをエディタ上でも反映させていくようにする
+    /// </summary>
+    /// <param name="reCalcDataPackage">更新データ</param>
+    /// <returns></returns>
+    private IEnumerator UpdateEditor(ReCalcTransientDataPackage reCalcTransientDataPackage)
+    {
+        for (int i = 0; i < reCalcTransientDataPackage.storageNum; i++)
+        {
+            if (intensities.ContainsKey(reCalcTransientDataPackage.sendNums[i]))
+            {
+                var pushObj = intensities[reCalcTransientDataPackage.sendNums[i]];
+                //色変更を行う
+                pushObj.transform.localRotation = Quaternion.LookRotation(10000000000 * reCalcTransientDataPackage.intensities[i]);
+                var lv = AcousticMathNew.CalcuIntensityLevel(reCalcTransientDataPackage.intensities[i]);
+                pushObj.transform.GetComponent<Renderer>().material.color = ColorBar.DefineColor(MeasurementParameter.colormapID, lv, MeasurementParameter.MinIntensity, MeasurementParameter.MaxIntensity);
+                //瞬時音響インテンシティの変更
+                var intensityDirection = reCalcTransientDataPackage.iintensityList[i];
+                float[] intensityLv = new float[intensityDirection.Length];
+                for (int j = 0; j < intensityDirection.Length; j++)
+                {
+                    intensityLv[j] = MathFFTW.CalcuIntensityLevel(intensityDirection[j]);
+                }
+
+                var parameter = pushObj.GetComponent<ParameterStorage>();
+                parameter.PutIntensity(intensityDirection, intensityLv);
+                yield return null;
+            }
+        }
+        yield return null;
+    }
     /// <summary>
     /// バイナリデータセーブ
     /// </summary>    
@@ -149,6 +226,7 @@ public class TransientIntensityManager : MonoBehaviour
     }
     async Task Save()
     {
+        await Task.Run(() => SettingSave());
         Debug.Log(MeasurementParameter.SaveDir);
         //ディレクトリなかったら作成
         SafeCreateDirectory(MeasurementParameter.SaveDir);
@@ -185,7 +263,7 @@ public class TransientIntensityManager : MonoBehaviour
             });
         }
         MeasurementParameter.plotNumber = dataStorages.Count;
-        await Task.Run(() => SettingSave());
+        
     }
 
 
