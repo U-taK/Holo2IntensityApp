@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Security;
 using UnityEngine;
+using Microsoft.MixedReality.Toolkit.UI;
 
 namespace uOSC
 {
@@ -34,10 +35,14 @@ namespace uOSC
             VectorObj.transform.localRotation = Quaternion.LookRotation(10000000000 * intensity);
             VectorObj.transform.GetComponent<Renderer>().material.color = vecColor;
             VectorObj.name = "IntensityObject";
+            var interact = VectorObj.GetComponent<Interactable>();
+            if (interact != null)
+                interact.enabled = !UIManager._measure;
+
             var panel = VectorObj.GetComponentInChildren<IntensityPanel>();
             if (panel != null)
             {
-                Destroy(panel.gameObject);
+                panel.UpdatePanel(this, intensity, No, micPos);
                 panels.Add(panel);
             }
             intensities.Add(No, VectorObj);
@@ -109,6 +114,37 @@ namespace uOSC
             }
         }
 
+        /// <summary>
+        /// 色変更
+        /// </summary>
+        /// <param name="No"></param>
+        /// <param name="newIntensity"></param>
+        /// <param name="color"></param>
+        public void ChangeInstantIntensityObj(int No, Vector3 newIntensity, Color color, Vector3[] iintensities)
+        {
+            if (intensities.ContainsKey(No))
+            {
+                var pushObj = intensities[No];
+                //色変更を行う
+                pushObj.transform.localRotation = Quaternion.LookRotation(10000000000 * newIntensity);
+                pushObj.transform.GetComponent<Renderer>().material.color = color;
+                
+                var storage = pushObj.GetComponent<IntensityObject>();
+                //瞬時音響インテンシティをリストに保持させる
+                List<Color> colors = new List<Color>();
+                List<Vector3> scales = new List<Vector3>();
+
+                foreach (var iintensiy in iintensities)
+                {
+                    var intensityLv = AIMath.CalcuIntensityLevel(iintensiy);
+                    colors.Add(ColorBar.DefineColor(Holo2MeasurementParameter.ColorMapID, intensityLv, Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax));
+                    scales.Add(DefineSize(intensityLv, Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax));
+                }
+                storage.PushSumIntensity(newIntensity, color);
+                storage.PushInstantIntensity(iintensities, colors, scales);
+            }
+        }
+
         //削除
         public void DeleteVectorObj(int dNum)
         {
@@ -163,6 +199,17 @@ namespace uOSC
             else
             {
                 return Vector3.zero;
+            }
+        }
+        /// <summary>
+        /// インテンシティの情報を含むパネルを計測時以外にonにする
+        /// </summary>
+        public void PanelFocusSwitch()
+        {
+            foreach(var intensity in intensities.Values)
+            {
+                var interact = intensity.GetComponent<Interactable>();
+                interact.enabled = !UIManager._measure;
             }
         }
     }

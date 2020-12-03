@@ -43,6 +43,7 @@ public class Holo2ClientManager : MonoBehaviour
 
     Queue<IntensityPackage> intensityPackages = new Queue<IntensityPackage>();
     Queue<ReCalcDataPackage> recalcDataPackages = new Queue<ReCalcDataPackage>();
+    Queue<ReCalcTransientDataPackage> recalcTransDataPackage = new Queue<ReCalcTransientDataPackage>();
     Queue<ReproDataPackage> reproDatas = new Queue<ReproDataPackage>();
     Queue<TransIntensityPackage> iIntensitiesPackages = new Queue<TransIntensityPackage>();
     Queue<DeleteData> deleteDatas = new Queue<DeleteData>();
@@ -186,6 +187,11 @@ public class Holo2ClientManager : MonoBehaviour
             var deleteData = deleteDatas.Dequeue();
             instanceMaanger.DeleteVectorObj(deleteData.intensityID);
         }
+        if(recalcTransDataPackage.Count > 0)
+        {
+            var package = recalcTransDataPackage.Dequeue();
+            StartCoroutine("ReCalcTransIntensityMap", package);
+        }
     }
 
     /// <summary>
@@ -232,6 +238,19 @@ public class Holo2ClientManager : MonoBehaviour
                 float intensityLv = AIMath.CalcuIntensityLevel(recalcData.intensities[n]);
                 Color ObjColor = ColorBar.DefineColor(Holo2MeasurementParameter.ColorMapID, intensityLv, Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax);
             instanceMaanger.ChangeIntensityObj(recalcData.sendNums[n], recalcData.intensities[n], ObjColor);
+
+            yield return null;
+        }
+    }
+
+    IEnumerator ReCalcTransIntensityMap(ReCalcTransientDataPackage recalcData)
+    {
+        for (int n = 0; n < recalcData.storageNum; n++)
+        {
+
+            float intensityLv = AIMath.CalcuIntensityLevel(recalcData.intensities[n]);
+            Color ObjColor = ColorBar.DefineColor(Holo2MeasurementParameter.ColorMapID, intensityLv, Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax);
+            instanceMaanger.ChangeInstantIntensityObj(recalcData.sendNums[n], recalcData.intensities[n], ObjColor, recalcData.iintensityList[n]);
 
             yield return null;
         }
@@ -392,6 +411,7 @@ public class Holo2ClientManager : MonoBehaviour
                     case SendType.MeasurementType:
                         transferData.DesirializeJson<How2Measure>(out var how2Measure);
                         Holo2MeasurementParameter.measurementType = how2Measure.measureType;
+                        Holo2MeasurementParameter.i_block = how2Measure.blockSize;
                         break;
                     case SendType.Intensity:
                         transferData.DesirializeJson<IntensityPackage>(out var intensityData);
@@ -417,6 +437,10 @@ public class Holo2ClientManager : MonoBehaviour
                         transferData.DesirializeJson<ReCalcDataPackage>(out var recalcDataPackage);
                         recalcDataPackages.Enqueue(recalcDataPackage);
                         break;
+                    case SendType.ReCalcTransData:
+                        transferData.DesirializeJson<ReCalcTransientDataPackage>(out var reCalcTransientDataPackage);
+                        recalcTransDataPackage.Enqueue(reCalcTransientDataPackage);
+                        break;                       
                     case SendType.ReproData:
                         transferData.DesirializeJson<ReproDataPackage>(out var reproDataPackage);
                         //シェアリング側のみ実行

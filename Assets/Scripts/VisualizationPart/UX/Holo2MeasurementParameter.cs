@@ -53,4 +53,7 @@ public class Holo2MeasurementParameter : MonoBehaviour
     public static MeasurementType measurementType = MeasurementType.Standard;
 
     public static int fs = 44100;
+
+    //インテンシティ推定のためのブロック長
+    public static int i_block = 1;
 }

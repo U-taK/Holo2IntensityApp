@@ -12,6 +12,8 @@ namespace HoloLensModule.Network
 {
     public class TCPServer
     {
+        public ServerStateObject serverState { get; private set; } = new ServerStateObject();
+
         /** メンバ **/
         //Socket
         private Socket server = null;
@@ -27,8 +29,6 @@ namespace HoloLensModule.Network
         /*public SynchronizedCollection clientSockets { get; }
             = new SynchronizedCollection();*/
         public List<Socket> ClientSockets { get; } = new List<Socket>();
-
-        StateObject serverState = StateObject.stateObject;
 
         /** イベント **/
         //データ受信イベント
@@ -80,7 +80,7 @@ namespace HoloLensModule.Network
             Debug.Log("クライアント閉じるよ");
             CloseClients();
             //workSocket?閉じ
-            StateObject.stateObject.CloseWorkSocket();
+            serverState.CloseWorkSocket();
 
             //接続断イベント発生
             string msg = "Close Server";
@@ -178,9 +178,7 @@ namespace HoloLensModule.Network
             }
         }
         private void AcceptCallback(IAsyncResult ar)
-        {
-            //Debug.Log("接続したよ");
-            var serverState = StateObject.stateObject;
+        {           
             allDone.Set();
             var listener = (Socket)ar.AsyncState;
             var handler = listener.EndAccept(ar);
@@ -188,26 +186,30 @@ namespace HoloLensModule.Network
             //接続中のクライアント、スレッドセーフに追加
             //TODO:本当はSynchronizedCollection使いたい
             lock (((ICollection)ClientSockets).SyncRoot)
+            {
                 ClientSockets.Add(handler);
+                serverState.connectedClientNum++;
+            }
             Debug.Log(handler.RemoteEndPoint + "と接続したよ");
             string log = handler.RemoteEndPoint.ToString();
             //接続OKイベント発生
             OnConnected(new EventArgs(),log);
 
-            serverState.workSocket = handler;
+            serverState.workSockets.Add(handler);
             Debug.Log("受信するよ");
 
             //接続要求待機再開
             /*listener.BeginAccept(
                 new AsyncCallback(AcceptCallback), listener);*/
             //送信時に受信開始、接続要求待機終了
-            handler.BeginReceive(serverState.buffer, 0, StateObject.BufferSize, 0,
-                new AsyncCallback(ReadCallback), serverState);
+            handler.BeginReceive(serverState.buffer, 0, ServerStateObject.BufferSize, 0,
+                new AsyncCallback(ReadCallback), handler);
         }
         private void ReadCallback(IAsyncResult ar)
         {
-            var serverState = (StateObject)ar.AsyncState;
-            var handler = serverState.workSocket;
+            // var serverState = (ServerStateObject)ar.AsyncState;
+            // var handler = serverState.workSocket;
+            var handler = (Socket)ar.AsyncState;
 
             try
             {
@@ -226,8 +228,8 @@ namespace HoloLensModule.Network
 
                     //TODO:受信中断、再開処理？
                     //受信続行
-                    handler.BeginReceive(serverState.buffer, 0, StateObject.BufferSize, 0,
-                        new AsyncCallback(ReadCallback), serverState);
+                    handler.BeginReceive(serverState.buffer, 0, ServerStateObject.BufferSize, 0,
+                        new AsyncCallback(ReadCallback), handler);
                 }
                 else
                 {
@@ -237,7 +239,10 @@ namespace HoloLensModule.Network
                     handler.Close();
                     //TODO:本当はSynchronizedCollection使いたい
                     lock (((ICollection)this.ClientSockets).SyncRoot)
+                    {
                         this.ClientSockets.Remove(handler);
+                        serverState.connectedClientNum--;
+                    }
 
                     //接続断イベント
                     string msg = handler.RemoteEndPoint.ToString();
@@ -253,7 +258,10 @@ namespace HoloLensModule.Network
                     handler.Close();
                     //TODO:本当はSynchronizedCollection使いたい
                     lock (((ICollection)this.ClientSockets).SyncRoot)
+                    {
                         this.ClientSockets.Remove(handler);
+                        serverState.connectedClientNum--;
+                    }
                     //接続断イベント
                     OnDisconnected(this, new EventArgs(), e.Message);
                 }
@@ -273,45 +281,8 @@ namespace HoloLensModule.Network
         /// <summary>
         /// 送信
         /// </summary>
-        /// <param name="data">送信データ</param>
-        public void Send(String data)
-        {
-            try
-            {
-                var serverState = StateObject.stateObject;
-                var handler = serverState.workSocket;
-
-                //文字列に変換 
-                var byteData = enc.GetBytes(data);
-
-                Debug.Log(data + "を送信するよ");
-                //データ送信イベント
-                //OnSendData(this, data);
-
-                // Begin sending the data to the remote device.  
-                handler.BeginSend(byteData, 0, byteData.Length, 0,
-                    new AsyncCallback(SendCallback), handler);
-            }
-            catch (SocketException e)
-            {
-                if (e.NativeErrorCode.Equals(10054))
-                {
-                    //既存の接続がリモートホストによって強制的に切断された
-                    //接続断イベント
-                    OnDisconnected(this, new EventArgs(), e.Message);
-                }
-                else
-                {
-                    string msg = string.Format("Disconnected!: error code {0} : {1}",
-                       e.NativeErrorCode, e.Message);
-                    Debug.Log(msg);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.Log(ex);
-            }
-        }
+        /// <param name="clientSocket">接続クライアント</param>
+        /// <param name="data">送信データ(json)</param>
         public void Send(Socket clientSocket, String data)
         {
             try

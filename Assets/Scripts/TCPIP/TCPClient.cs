@@ -23,22 +23,24 @@ namespace HoloLensModule.Network
 {
     public class TCPClient
     {
+
+        public ClientStateObject clientState { get; private set; } = new ClientStateObject();
+
         /** メンバ **/
 #if WINDOWS_UWP
     private StreamSocket socket = null;
     private StreamWriter writer = null;
     private Task writetask = null;
+    private Task readTask = null;
+    private bool isActiveThread = true;
 #else
         //Socket
         private Socket client = null;
 #endif
-        //TODO:淘汰？
-        private bool isActiveThread = true;
+
         //送受信文字列エンコード
         private Encoding enc = Encoding.UTF8;
-        //シーン上にログ出し
 
-        StateObject clientState =  StateObject.stateObject;
 
         /** イベント **/
         //接続OKイベント
@@ -64,8 +66,7 @@ namespace HoloLensModule.Network
 #endif
 
         /** プロパティ **/
-#if WINDOWS_UWP
-#else
+#if !WINDOWS_UWP
         /// <summary>
         /// ソケットが閉じているか
         /// </summary>
@@ -73,10 +74,7 @@ namespace HoloLensModule.Network
         {
             get { return (client == null); }
         }
-#endif
 
-#if WINDOWS_UWP
-#else
         /// <summary>
         /// Dispose
         /// </summary>
@@ -104,6 +102,7 @@ namespace HoloLensModule.Network
            
             //接続
             Connect(host, port);
+            clientState.myPort = port;
         }
 #if WINDOWS_UWP
 #else
@@ -112,6 +111,7 @@ namespace HoloLensModule.Network
             client = sc;
             //接続
             Connect(host, port);
+            clientState.myPort = port;
         }
 #endif
 
@@ -124,12 +124,19 @@ namespace HoloLensModule.Network
         if (writetask != null || writetask.IsCompleted != true)
             writetask = null;   //dispose的なのあるかな
         isActiveThread = false;
+        readTask = null;
         socket.Dispose();
         if (writer != null)
         {
             writer.Dispose();
         }
         writer = null;
+        if (socket != null)
+        {
+            socket.Dispose();
+        }
+        socket = null;
+        clientState.isConnected = false;
 #else
             //クライアント閉じ
             Debug.Log("クライアント閉じるよ");
@@ -161,6 +168,8 @@ namespace HoloLensModule.Network
                     //Socketを閉じる
                     client.Close();
                     client = null;
+                    clientState.isConnected = false;
+
                     Debug.Log("クライアント閉じたよ");
                 }
             }
@@ -176,70 +185,56 @@ namespace HoloLensModule.Network
         private void Connect(string host, int port)
         {
 #if WINDOWS_UWP
-        Task.Run(async() =>
-        {
-            try
+            if (readTask == null || readTask.IsCompleted == true)
             {
-                await socket.ConnectAsync(new HostName(host), port.ToString());
-
-            }
-            catch (Exception e)
-            {
-                var trace = new StackTrace(e, true);
-                
-                return;
-            }
-            try
-            {
-                writer = new StreamWriter(socket.OutputStream.AsStreamForWrite());
-
-            }
-            catch (Exception e)
-            {
-
-                var trace = new StackTrace(e, true);
-                return;
-            }
-            StreamReader reader;
-            try
-            {
-             reader = new StreamReader(socket.InputStream.AsStreamForRead());
-            }
-            catch (Exception e)
-            {
-                var trace = new StackTrace(e, true);
-
-                return;
-            }
-            byte[] bytes = new byte[65536];
-            //接続OKイベント発生
-            OnConnected(new EventArgs());
-            while (isActiveThread)
-            {
-                try
+                readTask = Task.Run(async () =>
                 {
-                    int num = await reader.BaseStream.ReadAsync(bytes, 0, bytes.Length);
-                    if (num > 0)
+                    StreamReader reader;
+                    try
                     {
-                        byte[] data = new byte[num];
-                        Array.Copy(bytes, 0, data, 0, num);
-                        if (ListenerMessageEvent != null) 
-                            ListenerMessageEvent(Encoding.UTF8.GetString(data));
-                        /*if (ListenerByteEvent != null) 
-                            ListenerByteEvent(data);*/
+                        await socket.ConnectAsync(new HostName(host), port.ToString());
+                        writer = new StreamWriter(socket.OutputStream.AsStreamForWrite());
+                        reader = new StreamReader(socket.InputStream.AsStreamForRead());
+
                     }
-                }
-                catch (Exception e)
-                {
-                }
+                    catch (Exception e)
+                    {
+                        var trace = new StackTrace(e, true);
+
+                        return;
+                    }
+
+                    byte[] bytes = new byte[65536];
+                    clientState.isConnected = true;
+                    //接続OKイベント発生
+                    OnConnected(new EventArgs());
+                    while (isActiveThread)
+                    {
+                        try
+                        {
+                            int num = await reader.BaseStream.ReadAsync(bytes, 0, bytes.Length);
+                            if (num > 0)
+                            {
+                                byte[] data = new byte[num];
+                                Array.Copy(bytes, 0, data, 0, num);
+                                if (ListenerMessageEvent != null)
+                                    ListenerMessageEvent(Encoding.UTF8.GetString(data));
+                                /*if (ListenerByteEvent != null) 
+                                    ListenerByteEvent(data);*/
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                        }
+                    }
+                    socket.Dispose();
+                    if (writer != null)
+                    {
+                        writer.Dispose();
+                    }
+                    writer = null;
+                });
             }
-            socket.Dispose();
-            if (writer != null)
-            {
-                writer.Dispose();
-            }
-            writer = null;
-        });
 #else
             //IP作成
             var ipEndPoint = new IPEndPoint(
@@ -283,13 +278,12 @@ namespace HoloLensModule.Network
         public void StartReceive()
         {
             try
-            {
-                var clienState = StateObject.stateObject;
-                clienState.workSocket = client;
+            {                
+                clientState.workSockets.Add(client);
 
                 Debug.Log("受信するよ");
-                client.BeginReceive(clienState.buffer, 0, StateObject.BufferSize,
-                    0, new AsyncCallback(ReceiveCallback), clienState);
+                client.BeginReceive(clientState.buffer, 0, StateObject.BufferSize,
+                    0, new AsyncCallback(ReceiveCallback), client);
             }
             catch (Exception e)
             {
@@ -300,8 +294,7 @@ namespace HoloLensModule.Network
         {
             try
             {
-                var clientState = (StateObject)ar.AsyncState;
-                var client = clientState.workSocket;
+                var client = (Socket)ar.AsyncState;
 
 
                 //受信
@@ -328,7 +321,7 @@ namespace HoloLensModule.Network
                     {
                         //受信続行
                         client.BeginReceive(clientState.buffer, 0, StateObject.BufferSize,
-                            0, new AsyncCallback(ReceiveCallback), clientState);
+                            0, new AsyncCallback(ReceiveCallback), client);
                     }
                 }
                 /*else
@@ -338,7 +331,7 @@ namespace HoloLensModule.Network
                     Debug.Log("受信終了");
                     //永遠に受信し続ける
                     client.BeginReceive(clientState.buffer, 0, StateObject.BufferSize,
-                            0, new AsyncCallback(ReceiveCallback), clientState);
+                            0, new AsyncCallback(ReceiveCallback), client);
                 }*/
             }
             catch (Exception e)
@@ -355,19 +348,19 @@ namespace HoloLensModule.Network
         public void StartSend(string str)
         {
 #if WINDOWS_UWP
-        byte[] data = enc.GetBytes(str + "\r\n");
-        if (writetask == null || writetask.IsCompleted == true)
-        {
-            if (writer != null)
+            byte[] data = enc.GetBytes(str + "\r\n");
+            if (writetask == null || writetask.IsCompleted == true)
             {
-                writetask = Task.Run(async () =>
+                if (writer != null)
                 {
-                    await writer.BaseStream.WriteAsync(data, 0, data.Length);
-                    await writer.FlushAsync();
-                });
+                    writetask = Task.Run(async () =>
+                    {
+                        await writer.BaseStream.WriteAsync(data, 0, data.Length);
+                        await writer.FlushAsync();
+                    });
+                }
             }
-        }
-#else
+            #else
             if (!IsClosed)
             {
                 //文字列をBYTE配列に変換

@@ -51,6 +51,7 @@ public class AnimManager : MonoBehaviour
     {
         Debug.Log("Animation Start");
         intObjs = GetComponentsInChildren<IntensityObject>();
+        nowframe = 0;
         playNow = true;//状態遷移
         while (nowframe >= 0 && nowframe < intObjs[0].tranIntensity.Length)
         {
@@ -140,7 +141,8 @@ public class AnimManager : MonoBehaviour
 
     public string UpdateDisplay()
     {
-        sec = (float)nowframe / Holo2MeasurementParameter.fs;
+        //オーバーラップを前提にし、i_blockを1/2する
+        sec = (float)nowframe * Holo2MeasurementParameter.i_block / (Holo2MeasurementParameter.fs*2);
         return $"frame: {nowframe}\n sec: {sec.ToString("F5")}";
     }
 }
