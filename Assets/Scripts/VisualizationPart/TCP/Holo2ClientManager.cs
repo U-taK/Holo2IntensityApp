@@ -248,12 +248,17 @@ public class Holo2ClientManager : MonoBehaviour
 
     IEnumerator ReCalcTransIntensityMap(ReCalcTransientDataPackage recalcData)
     {
+        var frame = recalcData.iintensityList.Count / recalcData.storageNum;
         for (int n = 0; n < recalcData.storageNum; n++)
         {
-
+            var iintensity = new Vector3[frame];
+            for (int j = 0; j < frame; j++)
+            {
+                iintensity[j] = recalcData.iintensityList[n * frame + j];
+            }
             float intensityLv = AIMath.CalcuIntensityLevel(recalcData.intensities[n]);
             Color ObjColor = ColorBar.DefineColor(Holo2MeasurementParameter.ColorMapID, intensityLv, Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax);
-            instanceMaanger.ChangeInstantIntensityObj(recalcData.sendNums[n], recalcData.intensities[n], ObjColor, recalcData.iintensityList[n]);
+            instanceMaanger.ChangeInstantIntensityObj(recalcData.sendNums[n], recalcData.intensities[n], ObjColor, iintensity);
 
             yield return null;
         }
