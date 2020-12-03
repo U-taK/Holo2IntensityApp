@@ -172,33 +172,40 @@ public class TransientIntensityManager : MonoBehaviour
     private ReCalcTransientDataPackage AsyncReCalc()
     {
         ReCalcTransientDataPackage data = new ReCalcTransientDataPackage(dataStorages.Count);
-        List<Vector3> intensityList = new List<Vector3>();
+        List<Vector3> iintensities = new List<Vector3>();
         foreach (DataStorage dataStorage in dataStorages.Values)
         {
-            intensityList.Clear();
+            iintensities.Clear();
             //時間変化する音響インテンシティを指定したアルゴリズムを元に計算
             switch (algorithmList.value)
             {
                 case 0://直接法
-                    intensityList.AddRange(AcousticSI.DirectMethod(dataStorage.soundSignal, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval));
+                    var intensity = AcousticSI.DirectMethod(dataStorage.soundSignal, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval);
+                    iintensities.AddRange(intensity);
+                    data.iintensityList.AddRange(intensity);
                     break;
                 case 1://STFTを使った時間周波数領域での計算処理
-                    intensityList.AddRange(MathFFTW.STFTmethod(dataStorage.soundSignal, MeasurementParameter.i_block / 2, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval));
+                    var intensity2 = MathFFTW.STFTmethod(dataStorage.soundSignal, MeasurementParameter.i_block / 2, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval);
+                    iintensities.AddRange(intensity2);
+                    data.iintensityList.AddRange(intensity2);
                     break;
                 case 2://アンビソニックマイクを使った時間領域のpsudoIntensityの推定
-                    intensityList.AddRange(MathAmbisonics.TdomMethod(dataStorage.soundSignal, MeasurementParameter.AtmDensity, 340));
+                    var intensity3 = MathAmbisonics.TdomMethod(dataStorage.soundSignal, MeasurementParameter.AtmDensity, 340);
+                    iintensities.AddRange(intensity3);
+                    data.iintensityList.AddRange(intensity3);
                     break;
                 case 3://アンビソニックマイクを使った時間周波数領域のpsudoIntensityの推定
-                    intensityList.AddRange(MathAmbisonics.TFdomMethod(dataStorage.soundSignal, MeasurementParameter.i_block / 2, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, 340));
+                    var intensity4 = MathAmbisonics.TFdomMethod(dataStorage.soundSignal, MeasurementParameter.i_block / 2, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, 340);
+                    iintensities.AddRange(intensity4);
+                    data.iintensityList.AddRange(intensity4);
                     break;
             }
-            var intensityDirection = intensityList.ToArray();
+            var intensityDirection = iintensities.ToArray();
             //平均インテンシティ計算
             var sumIntensity = AcousticSI.SumIntensity(intensityDirection);
 
             data.sendNums.Add(dataStorage.measureNo);
             data.intensities.Add(sumIntensity);
-            data.iintensityList.Add(intensityDirection);
         }
 
         return data;
@@ -211,8 +218,10 @@ public class TransientIntensityManager : MonoBehaviour
     /// <returns></returns>
     private IEnumerator UpdateEditor(ReCalcTransientDataPackage reCalcTransientDataPackage)
     {
+        int frame = reCalcTransientDataPackage.iintensityList.Count / reCalcTransientDataPackage.storageNum;
         for (int i = 0; i < reCalcTransientDataPackage.storageNum; i++)
         {
+
             if (intensities.ContainsKey(reCalcTransientDataPackage.sendNums[i]))
             {
                 var pushObj = intensities[reCalcTransientDataPackage.sendNums[i]];
@@ -221,10 +230,12 @@ public class TransientIntensityManager : MonoBehaviour
                 var lv = AcousticMathNew.CalcuIntensityLevel(reCalcTransientDataPackage.intensities[i]);
                 pushObj.transform.GetComponent<Renderer>().material.color = ColorBar.DefineColor(MeasurementParameter.colormapID, lv, MeasurementParameter.MinIntensity, MeasurementParameter.MaxIntensity);
                 //瞬時音響インテンシティの変更
-                var intensityDirection = reCalcTransientDataPackage.iintensityList[i];
-                float[] intensityLv = new float[intensityDirection.Length];
-                for (int j = 0; j < intensityDirection.Length; j++)
+
+                var intensityDirection = new Vector3[frame];
+                float[] intensityLv = new float[frame];
+                for (int j = 0; j < frame; j++)
                 {
+                    intensityDirection[j] = reCalcTransientDataPackage.iintensityList[i * frame + j];
                     intensityLv[j] = MathFFTW.CalcuIntensityLevel(intensityDirection[j]);
                 }
 
