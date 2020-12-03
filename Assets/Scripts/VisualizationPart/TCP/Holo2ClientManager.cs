@@ -241,6 +241,9 @@ public class Holo2ClientManager : MonoBehaviour
 
             yield return null;
         }
+        Debug.Log("Recalculation finished");
+           
+        yield return null;
     }
 
     IEnumerator ReCalcTransIntensityMap(ReCalcTransientDataPackage recalcData)
@@ -435,6 +438,7 @@ public class Holo2ClientManager : MonoBehaviour
                         break;
                     case SendType.ReCalcData:
                         transferData.DesirializeJson<ReCalcDataPackage>(out var recalcDataPackage);
+                        Debug.Log("catch recalcdata");
                         recalcDataPackages.Enqueue(recalcDataPackage);
                         break;
                     case SendType.ReCalcTransData:
@@ -458,6 +462,10 @@ public class Holo2ClientManager : MonoBehaviour
                         deleteDatas.Enqueue(deleteData);
                         break;
                 }
+            }
+            else
+            {
+                Debug.Log("cannot desirialize");
             }
         }
     }
@@ -489,5 +497,13 @@ public class Holo2ClientManager : MonoBehaviour
             counter++;
             Debug.Log("Data send" + (counter - 1).ToString());
         }
+    }
+
+    /// <summary>
+    /// データ欠損などでクライアントからサーバにデータを送っても反応がなくなった際に押す
+    /// </summary>
+    public void CleanTransfer()
+    {
+        transferData.CleanStorage();
     }
 }
