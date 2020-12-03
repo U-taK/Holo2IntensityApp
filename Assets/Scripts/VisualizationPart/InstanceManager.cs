@@ -128,8 +128,9 @@ namespace uOSC
                 //色変更を行う
                 pushObj.transform.localRotation = Quaternion.LookRotation(10000000000 * newIntensity);
                 pushObj.transform.GetComponent<Renderer>().material.color = color;
-                
-                var storage = pushObj.GetComponent<IntensityObject>();
+
+                var parent = pushObj.transform.parent.gameObject;
+                var storage = parent.GetComponent<IntensityObject>();
                 //瞬時音響インテンシティをリストに保持させる
                 List<Color> colors = new List<Color>();
                 List<Vector3> scales = new List<Vector3>();
