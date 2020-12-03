@@ -54,7 +54,7 @@ public class MeasurementParameter : MonoBehaviour
         get { return asioDriver; }
     }
 
-    static string targetSource = "SIN1kHzsMin.bytes";
+    static string targetSource = "SIN1kHzsMin";
 
     public static string TargetSource
     {

@@ -64,7 +64,7 @@ public class SettingManager : MonoBehaviour
         logPanelManager.Writelog("MaxFreq:" + MeasurementParameter.FreqMax);
         
         //気体密度
-        MeasurementParameter.Temp = int.Parse(inTemp.text);
+        MeasurementParameter.Temp = float.Parse(inTemp.text);
         MeasurementParameter.Atm = float.Parse(inAtm.text);
         CalculateAtmDensity(MeasurementParameter.Atm, MeasurementParameter.Temp);
         logPanelManager.Writelog("Temp:" + MeasurementParameter.Temp + ",Atom:" + MeasurementParameter.Atm);
@@ -102,7 +102,7 @@ public class SettingManager : MonoBehaviour
         logPanelManager.Writelog("MaxFreq:" + MeasurementParameter.FreqMax);
 
         //気体密度
-        MeasurementParameter.Temp = int.Parse(inTemp.text);
+        MeasurementParameter.Temp = float.Parse(inTemp.text);
         MeasurementParameter.Atm = float.Parse(inAtm.text);
         CalculateAtmDensity(MeasurementParameter.Atm, MeasurementParameter.Temp);
         logPanelManager.Writelog("Temp:" + MeasurementParameter.Temp + ",Atom:" + MeasurementParameter.Atm);

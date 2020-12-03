@@ -265,7 +265,7 @@ public class IntensityManager : MonoBehaviour
     {
         //設定値メモ保存
         string settingTxtPath = MeasurementParameter.SaveDir + @"\setting.txt";
-        StreamWriter settingSW = new StreamWriter(settingTxtPath, false, System.Text.Encoding.GetEncoding("shift_jis"));
+        StreamWriter settingSW = new StreamWriter(settingTxtPath, false, System.Text.Encoding.UTF8);
         //    settingSW.WriteLine("MeasurePointNum : " + dataStorages.Count.ToString());
         settingSW.WriteLine("sampleRate : " + MeasurementParameter.Fs);
         settingSW.WriteLine("sampleLength : " + MeasurementParameter.SampleNum);

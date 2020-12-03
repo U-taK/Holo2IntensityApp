@@ -222,4 +222,12 @@ public class ServerManager : MonoBehaviour
             StopTCPServer();
         asiocsharpdll.StopAsioMain();
     }
+
+    /// <summary>
+    /// データ欠損などでクライアントからサーバにデータを送っても反応がなくなった際に押す
+    /// </summary>
+    public void CleanTransfer()
+    {
+        transferData.CleanStorage();
+    }
 }

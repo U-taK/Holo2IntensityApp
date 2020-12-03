@@ -93,4 +93,9 @@ public class TransferData
         instantJson = null;
     }
 
+    //データが欠損しクライアントからサーバにデータを送っても反応がなくなった際に押す
+    public void CleanStorage()
+    {
+        shortage = null;
+    }
 }

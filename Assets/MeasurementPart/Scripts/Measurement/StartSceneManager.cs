@@ -174,10 +174,10 @@ public class StartSceneManager : MonoBehaviour
     {
         soundList.ClearOptions();
         var di = new DirectoryInfo(DATA_SAVED_FOLDER);
-        files = di.GetFiles("*.bytes", SearchOption.TopDirectoryOnly);
-        foreach (FileInfo f in files)
+        var sfiles = di.GetFiles("*.bytes", SearchOption.TopDirectoryOnly);
+        foreach (FileInfo f in sfiles)
         {
-            soundList.options.Add(new Dropdown.OptionData { text = f.Name });
+            soundList.options.Add(new Dropdown.OptionData { text = Path.GetFileNameWithoutExtension(f.Name) });
         }
         soundList.RefreshShownValue();
     }

@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using AsioCSharpDll;
 using System.IO;
 using System.Threading.Tasks;
+using System;
 
 public class TransientIntensityManager : MonoBehaviour
 {
@@ -18,6 +19,8 @@ public class TransientIntensityManager : MonoBehaviour
     //空間基準マーカプレハブ
     [SerializeField]
     GameObject copyStandard;
+    [SerializeField]
+    LogPanelManager logPanelManager;
 
     //インテンシティオブジェクトを作成しておく
     Dictionary<int, DataStorage> dataStorages = new Dictionary<int, DataStorage>();
@@ -29,6 +32,7 @@ public class TransientIntensityManager : MonoBehaviour
    
     TransientServerManager tServerManager;
 
+    public bool onPlay = false;
     // Start is called before the first frame update
     void Start()
     {
@@ -62,6 +66,21 @@ public class TransientIntensityManager : MonoBehaviour
         
     }
 
+    public void ConstPlayAndStop()
+    {
+        if (onPlay)
+        {
+            Debug.Log("stop");
+            asiocsharpdll.StopContSound();
+            onPlay = false;
+        }
+        else
+        {
+            Debug.Log("Start");
+            asiocsharpdll.StartContSound();
+            onPlay = true;
+        }               
+    }
     public void MicPosReceived(SendPosition sendPosition)
     {
         StartCoroutine(RecordSignal(sendPosition));
@@ -221,7 +240,15 @@ public class TransientIntensityManager : MonoBehaviour
     /// </summary>    
     public async void SaveBinaryData()
     {
-        await Task.Run(() => Save());
+        try
+        {
+            await Task.Run(() => Save());
+            logPanelManager.Writelog("Save data");
+        }
+        catch(Exception e)
+        {
+            logPanelManager.Writelog(e.Message);
+        }
 
     }
     async Task Save()
@@ -285,7 +312,7 @@ public class TransientIntensityManager : MonoBehaviour
     {
         //設定値メモ保存
         string settingTxtPath = MeasurementParameter.SaveDir + @"\setting.txt";
-        StreamWriter settingSW = new StreamWriter(settingTxtPath, false, System.Text.Encoding.GetEncoding("shift_jis"));
+        StreamWriter settingSW = new StreamWriter(settingTxtPath, false, System.Text.Encoding.UTF8);
         //    settingSW.WriteLine("MeasurePointNum : " + dataStorages.Count.ToString());
         settingSW.WriteLine("sampleRate : " + MeasurementParameter.Fs);
         settingSW.WriteLine("sampleLength : " + MeasurementParameter.SampleNum);
