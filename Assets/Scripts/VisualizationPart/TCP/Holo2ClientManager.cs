@@ -266,16 +266,41 @@ public class Holo2ClientManager : MonoBehaviour
 
     IEnumerator ReProIntensityMap(ReproDataPackage reproData)
     {
-        for (int n = 0; n < reproData.storageNum; n++)
+        //音響インテンシティ
+        if (reproData.algorithm == AlgorithmPattern.CrossSpectrum)
         {
-            var intensityLv = AcousticMathNew.CalcuIntensityLevel(reproData.intensities[n]);
-            //コーンの色を生成
-            Color vecObjColor = ColorBar.DefineColor(Holo2MeasurementParameter.ColorMapID, intensityLv,
-                Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax);
-            //オブジェクトを生成
-            instanceMaanger.CreateInstantObj(reproData.sendNums[n], reproData.sendPoses[n], reproData.sendRots[n], reproData.intensities[n], vecObjColor, Holo2MeasurementParameter.ObjSize);
+            for (int n = 0; n < reproData.storageNum; n++)
+            {
+                var intensityLv = AcousticMathNew.CalcuIntensityLevel(reproData.intensities[n]);
+                //コーンの色を生成
+                Color vecObjColor = ColorBar.DefineColor(Holo2MeasurementParameter.ColorMapID, intensityLv,
+                    Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax);
+                //オブジェクトを生成
+                instanceMaanger.CreateInstantObj(reproData.sendNums[n], reproData.sendPoses[n], reproData.sendRots[n], reproData.intensities[n], vecObjColor, Holo2MeasurementParameter.ObjSize);
 
-            yield return null;
+                yield return null;
+            }
+        }
+        else //過渡音を対象にした瞬時音響インテンシティ
+        {
+            var frame = reproData.iintensities.Count / reproData.storageNum;
+            for (int n = 0; n < reproData.storageNum; n++)
+            {
+                var intensityLv = AcousticMathNew.CalcuIntensityLevel(reproData.intensities[n]);
+                //コーンの色を生成
+                Color vecObjColor = ColorBar.DefineColor(Holo2MeasurementParameter.ColorMapID, intensityLv,
+                    Holo2MeasurementParameter.LevelMin, Holo2MeasurementParameter.LevelMax);
+                //オブジェクトを生成
+
+                var iintensity = new Vector3[frame];
+                for (int j = 0; j < frame; j++)
+                {
+                    iintensity[j] = reproData.iintensities[n * frame + j];
+                }
+                TransIntensityPackage transIntensityPackage = new TransIntensityPackage(reproData.sendPoses[n], reproData.sendRots[n], reproData.intensities[n], iintensity, reproData.sendNums[n]);
+                instanceMaanger.CreateInstantIIntensityObj(transIntensityPackage, vecObjColor, Holo2MeasurementParameter.ObjSize);
+                yield return null;
+            }
         }
     }
 
