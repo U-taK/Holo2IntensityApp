@@ -52,10 +52,12 @@ public class TransientIntensityManager : MonoBehaviour
             case 0:
             case 2:
                 MeasurementParameter.i_block = 2;
+                MeasurementParameter.n_overlap = 1;
                 break;
             case 1:
             case 3:
                 MeasurementParameter.i_block = 128;
+                MeasurementParameter.n_overlap = 64;
                 break;
         }
     }
@@ -110,13 +112,13 @@ public class TransientIntensityManager : MonoBehaviour
                 intensityList.AddRange(AcousticSI.DirectMethod(soundSignals, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval));
                 break;
             case 1://STFTを使った時間周波数領域での計算処理
-                intensityList.AddRange(MathFFTW.STFTmethod(soundSignals, MeasurementParameter.i_block / 2, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval));
+                intensityList.AddRange(MathFFTW.STFTmethod(soundSignals, MeasurementParameter.n_overlap, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval));
                 break;
             case 2://アンビソニックマイクを使った時間領域のpsudoIntensityの推定
                 intensityList.AddRange(MathAmbisonics.TdomMethod(soundSignals, MeasurementParameter.AtmDensity, 340));
                 break;
             case 3://アンビソニックマイクを使った時間周波数領域のpsudoIntensityの推定
-                intensityList.AddRange(MathAmbisonics.TFdomMethod(soundSignals, MeasurementParameter.i_block / 2, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, 340));
+                intensityList.AddRange(MathAmbisonics.TFdomMethod(soundSignals, MeasurementParameter.n_overlap, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, 340));
                 break;
         }
         var intensityDirection = intensityList.ToArray();
@@ -181,31 +183,27 @@ public class TransientIntensityManager : MonoBehaviour
             {
                 case 0://直接法
                     var intensity = AcousticSI.DirectMethod(dataStorage.soundSignal, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval);
-                    iintensities.AddRange(intensity);
+                    data.intensities.Add(AcousticSI.SumIntensity(intensity));
                     data.iintensityList.AddRange(intensity);
                     break;
                 case 1://STFTを使った時間周波数領域での計算処理
-                    var intensity2 = MathFFTW.STFTmethod(dataStorage.soundSignal, MeasurementParameter.i_block / 2, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval);
-                    iintensities.AddRange(intensity2);
+                    var intensity2 = MathFFTW.STFTmethod(dataStorage.soundSignal, MeasurementParameter.n_overlap, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval);
+                    data.intensities.Add(AcousticSI.SumIntensity(intensity2));
                     data.iintensityList.AddRange(intensity2);
                     break;
                 case 2://アンビソニックマイクを使った時間領域のpsudoIntensityの推定
                     var intensity3 = MathAmbisonics.TdomMethod(dataStorage.soundSignal, MeasurementParameter.AtmDensity, 340);
-                    iintensities.AddRange(intensity3);
+                    data.intensities.Add(AcousticSI.SumIntensity(intensity3));
                     data.iintensityList.AddRange(intensity3);
                     break;
                 case 3://アンビソニックマイクを使った時間周波数領域のpsudoIntensityの推定
-                    var intensity4 = MathAmbisonics.TFdomMethod(dataStorage.soundSignal, MeasurementParameter.i_block / 2, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, 340);
-                    iintensities.AddRange(intensity4);
+                    var intensity4 = MathAmbisonics.TFdomMethod(dataStorage.soundSignal, MeasurementParameter.n_overlap, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, 340);
+                    data.intensities.Add(AcousticSI.SumIntensity(intensity4));
                     data.iintensityList.AddRange(intensity4);
                     break;
             }
-            var intensityDirection = iintensities.ToArray();
-            //平均インテンシティ計算
-            var sumIntensity = AcousticSI.SumIntensity(intensityDirection);
-
-            data.sendNums.Add(dataStorage.measureNo);
-            data.intensities.Add(sumIntensity);
+            
+            data.sendNums.Add(dataStorage.measureNo);            
         }
 
         return data;

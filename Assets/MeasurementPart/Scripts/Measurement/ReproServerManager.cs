@@ -1,12 +1,22 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Unity.IO.LowLevel.Unsafe;
 using HoloLensModule.Network;
 using System;
 using System.Threading.Tasks;
 using AsioCSharpDll;
 using System.IO;
+
+public enum AlgorithmPattern
+{
+    CrossSpectrum,
+    instantaneous,
+    STFT,
+    AmbisonicsT,
+    AmbisonicsTF
+}
 
 public class ReproServerManager : MonoBehaviour
 {
@@ -19,12 +29,24 @@ public class ReproServerManager : MonoBehaviour
     [SerializeField]
     GameObject UIManager;
 
+    [SerializeField]
+    Dropdown algorithmList;
+
+    [SerializeField]
+    InputField inBlocksize;
+    [SerializeField]
+    InputField inOverlap;
+
     LogPanelManager logPanelManager;
     SettingManager settingManager;
 
     Queue<string> logQueue = new Queue<string>();
 
     List<DataStorage> dataStorages = new List<DataStorage>();
+
+    //再重畳の対象となるインテンシティの計算手法
+    AlgorithmPattern nowAlogrithm = AlgorithmPattern.CrossSpectrum;
+    MeasurementType nowMeasurementType = MeasurementType.Standard;
 
     //データ読み込みは1度だけにする
     bool initialLoad = true;
@@ -37,6 +59,8 @@ public class ReproServerManager : MonoBehaviour
         logPanelManager = UIManager.GetComponent<LogPanelManager>();
         settingManager = UIManager.GetComponent<SettingManager>();
         length_bit = (int)(Mathf.Log(MeasurementParameter.SampleNum, 2f));
+
+        algorithmList.onValueChanged.AddListener(ChangeAlgorithm);
     }
 
     // Update is called once per frame
@@ -62,6 +86,8 @@ public class ReproServerManager : MonoBehaviour
 
         //計測データの設定反映
         settingManager.InitParam4Repro();
+        MeasurementParameter.i_block = int.Parse(inBlocksize.text);
+        MeasurementParameter.n_overlap = int.Parse(inOverlap.text);
 
         Debug.Log("Init Setting");
     }
@@ -85,6 +111,9 @@ public class ReproServerManager : MonoBehaviour
     {
         Debug.Log("Clientと接続完了");
         logQueue.Enqueue(log + " is connected.");
+
+        How2Measure measureType = new How2Measure(nowMeasurementType, MeasurementParameter.i_block);
+        tServer.SendAllClient(transferData.SerializeJson<How2Measure>(measureType));
     }
 
     /// <summary>
@@ -121,7 +150,7 @@ public class ReproServerManager : MonoBehaviour
     /// <summary>
     /// バイナリファイルをインテンシティデータに変換
     /// </summary>
-    public async void LoadingData()
+    public async void LoadingDataAsync()
     {
         await Task.Run(() => AsyncLoadBin());
     }
@@ -200,15 +229,42 @@ public class ReproServerManager : MonoBehaviour
     public ReproDataPackage AsyncSendData()
     {
         //インテンシティ計算の実行
-        ReproDataPackage data = new ReproDataPackage(dataStorages.Count);
-        foreach(var datastorage in dataStorages)
+        ReproDataPackage data = new ReproDataPackage(dataStorages.Count, nowAlogrithm);
+        
+        foreach (var datastorage in dataStorages)
         {
             data.sendNums.Add(datastorage.measureNo);
             data.sendPoses.Add(datastorage.micLocalPos);
             data.sendRots.Add(datastorage.micLocalRot);
-            data.intensities.Add(datastorage.intensityDir);
-        }
 
+            switch (nowAlogrithm)
+            {
+                case AlgorithmPattern.CrossSpectrum://時間平均
+                    data.intensities.Add(datastorage.intensityDir);
+                    break;
+
+                case AlgorithmPattern.instantaneous: //瞬時音響インテンシティ
+                    var iintensity = AcousticSI.DirectMethod(datastorage.soundSignal, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval);
+                    data.intensities.Add(AcousticSI.SumIntensity(iintensity));
+                    data.iintensities.AddRange(iintensity);
+                    break;
+                case AlgorithmPattern.STFT: //STFTを使った時間周波数領域での計算処理
+                    var iintensity2 = MathFFTW.STFTmethod(datastorage.soundSignal, MeasurementParameter.n_overlap, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval);
+                    data.intensities.Add(AcousticSI.SumIntensity(iintensity2));
+                    data.iintensities.AddRange(iintensity2);
+                    break;
+                case AlgorithmPattern.AmbisonicsT://アンビソニックマイクを使った時間領域のpsudoIntensityの推定
+                    var iintensity3 = MathAmbisonics.TdomMethod(datastorage.soundSignal, MeasurementParameter.AtmDensity, 340);
+                    data.intensities.Add(AcousticSI.SumIntensity(iintensity3));
+                    data.iintensities.AddRange(iintensity3);
+                    break;
+                case AlgorithmPattern.AmbisonicsTF://アンビソニックマイクを使った時間周波数領域のpsudoIntensityの推定
+                    var iintensity4 = MathAmbisonics.TFdomMethod(datastorage.soundSignal, MeasurementParameter.n_overlap, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, 340);
+                    data.intensities.Add(AcousticSI.SumIntensity(iintensity4));
+                    data.iintensities.AddRange(iintensity4);
+                    break;
+            }
+        }
         return data;
     }
 
@@ -224,10 +280,20 @@ public class ReproServerManager : MonoBehaviour
         tServer.SendAllClient(json);
 
         //再計算を実行
-        ReCalcDataPackage recalcIntensity = await Task.Run(() => AsyncReCalc());
-        string json2 = transferData.SerializeJson<ReCalcDataPackage>(recalcIntensity);
-        tServer.SendAllClient(json2);
-        logQueue.Enqueue("Update data");
+        if (nowAlogrithm == AlgorithmPattern.CrossSpectrum)
+        {
+            ReCalcDataPackage recalcIntensity = await Task.Run(() => AsyncReCalc());
+            string json2 = transferData.SerializeJson<ReCalcDataPackage>(recalcIntensity);
+            tServer.SendAllClient(json2);
+            logQueue.Enqueue("Update data");
+        }
+        else
+        {
+            ReCalcTransientDataPackage recalcTransIntensity = await Task.Run(() => AsyncReCalcTrans());
+            string json2 = transferData.SerializeJson<ReCalcTransientDataPackage>(recalcTransIntensity);
+            tServer.SendAllClient(json2);
+            logQueue.Enqueue("Update data");
+        }
     }
 
     private ReCalcDataPackage AsyncReCalc()
@@ -243,4 +309,73 @@ public class ReproServerManager : MonoBehaviour
         }
         return data;
     }
+
+    private ReCalcTransientDataPackage AsyncReCalcTrans()
+    {
+        ReCalcTransientDataPackage data = new ReCalcTransientDataPackage(dataStorages.Count);
+        List<Vector3> iintensities = new List<Vector3>();
+        foreach (DataStorage dataStorage in dataStorages)
+        {
+            iintensities.Clear();
+            //時間変化する音響インテンシティを指定したアルゴリズムを元に計算
+            switch (nowAlogrithm)
+            {
+                case AlgorithmPattern.instantaneous://直接法
+                    var intensity = AcousticSI.DirectMethod(dataStorage.soundSignal, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval);
+                    data.intensities.Add(AcousticSI.SumIntensity(intensity));
+                    data.iintensityList.AddRange(intensity);
+                    break;
+                case AlgorithmPattern.STFT://STFTを使った時間周波数領域での計算処理
+                    var intensity2 = MathFFTW.STFTmethod(dataStorage.soundSignal, MeasurementParameter.n_overlap, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval);
+                    data.intensities.Add(AcousticSI.SumIntensity(intensity2));
+                    data.iintensityList.AddRange(intensity2);
+                    break;
+                case AlgorithmPattern.AmbisonicsT://アンビソニックマイクを使った時間領域のpsudoIntensityの推定
+                    var intensity3 = MathAmbisonics.TdomMethod(dataStorage.soundSignal, MeasurementParameter.AtmDensity, 340);
+                    data.intensities.Add(AcousticSI.SumIntensity(intensity3));
+                    data.iintensityList.AddRange(intensity3);
+                    break;
+                case AlgorithmPattern.AmbisonicsTF://アンビソニックマイクを使った時間周波数領域のpsudoIntensityの推定
+                    var intensity4 = MathAmbisonics.TFdomMethod(dataStorage.soundSignal, MeasurementParameter.n_overlap, MeasurementParameter.i_block, MeasurementParameter.Fs, MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, 340);
+                    data.intensities.Add(AcousticSI.SumIntensity(intensity4));
+                    data.iintensityList.AddRange(intensity4);
+                    break;
+            }
+
+            data.sendNums.Add(dataStorage.measureNo);
+        }
+
+        return data;
+
+    }
+
+    void ChangeAlgorithm(int ID)
+    {
+        switch (ID)
+        {
+            case 0:
+                nowAlogrithm = AlgorithmPattern.CrossSpectrum;
+                nowMeasurementType = MeasurementType.Standard;
+                break;
+            case 1:
+                nowAlogrithm = AlgorithmPattern.instantaneous;
+                nowMeasurementType = MeasurementType.Transient;
+                break;
+            case 2:
+                nowAlogrithm = AlgorithmPattern.STFT;
+                nowMeasurementType = MeasurementType.Transient;
+                break;
+            case 3:
+                nowAlogrithm = AlgorithmPattern.AmbisonicsT;
+                nowMeasurementType = MeasurementType.Transient;
+                break;
+            case 4:
+                nowAlogrithm = AlgorithmPattern.AmbisonicsTF;
+                nowMeasurementType = MeasurementType.Transient;
+                break;
+        }
+        MeasurementParameter.i_block = int.Parse(inBlocksize.text);
+        MeasurementParameter.n_overlap = int.Parse(inOverlap.text);
+    }
+
 }

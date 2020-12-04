@@ -120,15 +120,19 @@ public class ReCalcDataPackage: ServerMessage
 [Serializable]
 public class ReproDataPackage: ReCalcDataPackage
 {
+    public AlgorithmPattern algorithm; 
     public List<Vector3> sendPoses;
     public List<Quaternion> sendRots;
-    public ReproDataPackage(int storageNum) : base(storageNum)
+    public List<Vector3> iintensities;
+    public ReproDataPackage(int storageNum,AlgorithmPattern algorithm) : base(storageNum)
     {
         sendType = SendType.ReproData;
+        this.algorithm = algorithm;
         sendNums = new List<int>();
         sendPoses = new List<Vector3>();
         sendRots = new List<Quaternion>();
         intensities = new List<Vector3>();
+        iintensities = new List<Vector3>();
     }
 
     public ReproDataPackage() : base()

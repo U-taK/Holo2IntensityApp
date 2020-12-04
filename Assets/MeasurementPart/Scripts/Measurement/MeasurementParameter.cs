@@ -134,4 +134,7 @@ public class MeasurementParameter : MonoBehaviour
 
     //過渡音を対象にしたインテンシティを計算する際のブロックサイズ
     public static int i_block = 1;
+
+    //過渡音を対象にしたインテンシティを計算する際のオーバーラップ長
+    public static int n_overlap = 1;
 }
