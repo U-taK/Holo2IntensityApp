@@ -41,6 +41,7 @@ public class ReproServerManager : MonoBehaviour
     SettingManager settingManager;
 
     Queue<string> logQueue = new Queue<string>();
+    Queue<IntensityLog> intensityLogs = new Queue<IntensityLog>();
 
     List<DataStorage> dataStorages = new List<DataStorage>();
 
@@ -71,6 +72,11 @@ public class ReproServerManager : MonoBehaviour
             var log = logQueue.Dequeue();
             logPanelManager.Writelog(log);
         }
+        if (intensityLogs.Count > 0)
+        {
+            var log = intensityLogs.Dequeue();
+            logPanelManager.WriteConsole(log.num, log.sendPos, log.intensity);
+        }
     }
 
     /**tcp始めるボタンに紐づけ**/
@@ -86,8 +92,7 @@ public class ReproServerManager : MonoBehaviour
 
         //計測データの設定反映
         settingManager.InitParam4Repro();
-        MeasurementParameter.i_block = int.Parse(inBlocksize.text);
-        MeasurementParameter.n_overlap = int.Parse(inOverlap.text);
+        UpdateSTFTParam();
 
         Debug.Log("Init Setting");
     }
@@ -114,6 +119,11 @@ public class ReproServerManager : MonoBehaviour
 
         How2Measure measureType = new How2Measure(nowMeasurementType, MeasurementParameter.i_block);
         tServer.SendAllClient(transferData.SerializeJson<How2Measure>(measureType));
+        SettingSender ud_setting = new SettingSender("NewSetting", MeasurementParameter.colormapID, MeasurementParameter.MaxIntensity, MeasurementParameter.MinIntensity, MeasurementParameter.objSize);
+        //更新データをHololensに送信
+        string json = transferData.SerializeJson<SettingSender>(ud_setting);
+        tServer.SendAllClient(json);
+
     }
 
     /// <summary>
@@ -198,6 +208,7 @@ public class ReproServerManager : MonoBehaviour
                 MeasurementParameter.FreqMin, MeasurementParameter.FreqMax, MeasurementParameter.AtmDensity, MeasurementParameter.MInterval);
                         var level = AcousticMathNew.CalcuIntensityLevel(data.intensityDir);
                         dataStorages.Add(data);
+                        logQueue.Enqueue($"loading num is {data.measureNo}");
                     });
                 }
             }
@@ -264,6 +275,7 @@ public class ReproServerManager : MonoBehaviour
                     data.iintensities.AddRange(iintensity4);
                     break;
             }
+            intensityLogs.Enqueue( new IntensityLog(datastorage.measureNo, datastorage.micLocalPos, data.intensities[data.intensities.Count - 1]));
         }
         return data;
     }
@@ -275,9 +287,12 @@ public class ReproServerManager : MonoBehaviour
     {
         settingManager.InitParam4Repro();
         SettingSender ud_setting = new SettingSender("NewSetting", MeasurementParameter.colormapID, MeasurementParameter.MaxIntensity, MeasurementParameter.MinIntensity, MeasurementParameter.objSize);
+        How2Measure measureType = new How2Measure(nowMeasurementType, MeasurementParameter.i_block);
+        tServer.SendAllClient(transferData.SerializeJson<How2Measure>(measureType));
         //更新データをHololensに送信
         string json = transferData.SerializeJson<SettingSender>(ud_setting);
         tServer.SendAllClient(json);
+        UpdateSTFTParam();
 
         //再計算を実行
         if (nowAlogrithm == AlgorithmPattern.CrossSpectrum)
@@ -341,7 +356,7 @@ public class ReproServerManager : MonoBehaviour
                     data.iintensityList.AddRange(intensity4);
                     break;
             }
-
+            intensityLogs.Enqueue(new IntensityLog(dataStorage.measureNo, dataStorage.micLocalPos, data.intensities[data.intensities.Count - 1]));
             data.sendNums.Add(dataStorage.measureNo);
         }
 
@@ -374,8 +389,24 @@ public class ReproServerManager : MonoBehaviour
                 nowMeasurementType = MeasurementType.Transient;
                 break;
         }
+        UpdateSTFTParam();
+    }
+
+    void UpdateSTFTParam()
+    {
         MeasurementParameter.i_block = int.Parse(inBlocksize.text);
         MeasurementParameter.n_overlap = int.Parse(inOverlap.text);
     }
+}
 
+class IntensityLog
+{
+    public Vector3 sendPos, intensity;
+    public int num;
+    public IntensityLog(int i_num, Vector3 i_sendPos, Vector3 i_intensity)
+    {
+        this.num = i_num;
+        this.sendPos = i_sendPos;
+        this.intensity = i_intensity;
+    }
 }
